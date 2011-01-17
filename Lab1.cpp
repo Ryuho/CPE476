@@ -16,8 +16,8 @@ using namespace std;
 #define FLT_MIN 1.1754E-38F
 #define FLT_MAX 1.1754E+38F
 
-int _windowWidth;
-int _windowHeight;
+const int _windowWidth = 600;
+const int _windowHeight = 600;
 Uint8* _keys;
 
 //Mesh Vars
@@ -211,7 +211,7 @@ void readLine(char* str) {
   //faceNorms();
 }
 
-//TODO implement a simple routine that prints the first three vertices and faces to test that you successfully stored the data your data structures....
+//A simple routine that prints the first three vertices and faces to test that you successfully stored the data your data structures....
 void printFirstThree() {
    for(int i = 0;i < 3; i++){
       cout << verts[i].x << " " << verts[i].y << " " << verts[i].z << endl;
@@ -220,7 +220,7 @@ void printFirstThree() {
       cout << "Should be very first X " << verts[faces[0].one].x << endl;
 }
 
-//TODO imlement a drawing routine to draw triangles as wireframe
+
 void drawTria(int index) {
   glBegin(GL_TRIANGLES);
   glNormal3f(verts[faces[index].one].normX,verts[faces[index].one].normY,verts[faces[index].one].normZ);
@@ -232,82 +232,7 @@ void drawTria(int index) {
   glEnd();
 }
 
-/*float p2wx(int xp){
-	float newX = 0;
-	newX = (2.0/((float)_windowHeight))  *  ((float)xp - ((float) _windowWidth/2.0));
-	return newX;
-}
-float p2wy(int yp){
-	float newY = 0;
-	newY = (2.0/(float) _windowHeight) * (float) yp - 1.0;
-	return newY;
-}
-
-void calculateUVW(MyVector lookAt, MyVector eyePoint)
-{
-   /*MyVector gazeVector = * new MyVector();
-     MyVector upVector = (0,0,0,0,1,0);
-     MyVector vectorW = * new MyVector();
-     MyVector vectorV = * new MyVector();
-     MyVector vectorU = * new MyVector();
-     float mag = 0;
-     
-     //Step1
-     gazeVector.endX = lookAt.endX - eyePoint.endX
-     gazeVector.endY = lookAt.endY - eyePoint.endY
-     gazeVector.endZ = lookAt.endZ - eyePoint.endZ
-     
-     //Step2. X
-     mag = sqrt(pow(gazeVect.endX,2.0) + pow(gazeVect.endY,2.0) + pow(gazeVect.endZ,2.0));
-     vectorW.endX = -(gazeVector.endX/mag);
-     vectorW.endY = -(gazeVector.endY/mag);
-     vectorW.endZ = -(gazeVector.endZ/mag);
-     
-     //Step3. Y
-     float crossX;
-     float crossY;
-     float crossZ;
-     crossX = upVector.endY * vectorW.endZ - upVector.endZ * vectorW.endY;
-     crossY = upVector.endZ * vectorW.endX - upVector.endX * vectorW.endZ;
-     crossZ = upVector.endX * vectorW.endY - upVector.endY * vectorW.endX;
-     mag = sqrt(pow(crossX,2.0) + pow(crossY,2.0) + pow(crossZ,2.0));
-     vectorU.endX = crossX/mag;
-     vectorU.endY = crossY/mag;
-     vectorU.endZ = crossZ/mag;
-     
-     //Step4. Z
-     vectorV.endX = vectorW.endY * vectorU.endZ - vectorW.endZ * vectorU.endY;
-     vectorV.endY = vectorW.endZ * vectorU.endX - vectorW.endX * vectorU.endZ;
-     vectorV.endZ = vectorW.endX * vectorU.endY - vecgit@github.com:Ryuho/CPE476.gittorW.endY * vectorU.endX;
-     
-     
-     
-}
-
-void calculateEyePoint()
-{
-   /*EyePoint Formula
-   x = radius*cos(phi)*cos(theta)
-   y = radius*sin(phi)
-   z = radius*cos(phi)*cos(90.0-theta)
-   radius is used in zooming....
-   Need to convert from degrees to radians!!!!!!!
-   rad = deg * pi/180.0
-   
-   float phi, theta;
-   phi = mouseY * (3.14159265/180.0);
-   theta = mouseX * (3.14159265/180.0);
-   
-   
-   eyePoint.endX = radius * cos(phi) * cos(theta);
-   eyePoint.endY = radius * sin(phi);
-   eyePoint.endZ = radius * cos(phi)* cos(90.0 - theta);
-   
-}
-*/
-
 void drawBunny(void){
-
   for(unsigned int j = 0; j < faces.size(); j++) {
       drawTria(j);
     }
@@ -344,18 +269,11 @@ void drawWireFramePlane()
       for (float i = -4.0; i <= 4.0f; i += 1) {
         glVertex3f(i, 0, -4.0f);
         glVertex3f(i, 0, 4.0f);
-
         glVertex3f(-4.0f, 0, i);
         glVertex3f(4.0f, 0, i);
       }
     }
     glEnd();
-
-    glEnable(GL_LIGHTING);
-    glPushMatrix();
-    //draw_all_objects();
-    glPopMatrix();
-    glDisable(GL_LIGHTING);
   }
   glPopMatrix();
 }
@@ -391,21 +309,19 @@ void resetPerspectiveProjection() {
 void drawFPS()
 {
   glPushMatrix();
-  /////////////////////////////////////////////////////////////FPS CODE///////////////////////////////////////////
+  
   frame++;
   FPStime=glutGet(GLUT_ELAPSED_TIME);
-
+  
   if (FPStime - timebase > 1000) {
     sprintf(FPSDisplay,"FPS:%4.2f",frame*1000.0/(FPStime-timebase));
     timebase = FPStime;		
     frame = 0;
-    //renderBitmapCharacher(-.2,.7,0,FPSDisplay);
   }
-  glColor3f(0.0, 1.0, 0.0);
-  //////////////////////////////////////////////////////////////End FPS Code///////////////////////////////////////
+  glColor3f(1.0, 0.0, 0.0);
   renderBitmapString(-.2,.7,0,FPSDisplay);
+  
   glPopMatrix();
- 
 }
 
 void drawGameObjects()
@@ -532,8 +448,6 @@ int main(int argc, char *argv[])
 {
   //Initialization
   glutInit(&argc, argv);
-  _windowWidth = 600;
-  _windowHeight = 600;
   mouseX = 0;
   mouseY = 0;
   max_x = max_y = max_z = FLT_MIN;
