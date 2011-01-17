@@ -37,10 +37,6 @@ float pos_x = 0.0;
 float pos_y = 0.0;
 float pos_z = 0.0;
 
-//Player Movement Vars
-float forewardBackwardMovement;
-float leftRightMovement;
-
 //Game Vars
 vector<GameObject> gameObjects;
 
@@ -49,13 +45,25 @@ GLuint DLid;
 GLuint createDL(void);
 
 //FPS Vars
-int frame = 0;
-int FPStime,timebase=0;
+unsigned frame = 0;
+unsigned FPStime,timebase=0;
 char FPSDisplay [11];
 
-//Delta Time Camera
-int now = 0;
-int then = 0;
+//Points value
+unsigned points = 0;
+char PointsDisplay [11];
+
+//seconds elapsed
+unsigned seconds = 0;
+char SecondsDisplay [11];
+
+//used for delta time
+unsigned now = 0;
+unsigned then = 0;
+
+//constants
+float MOVE_DELTA = -0.002f;
+float MOUSE_DELTA = 0.001f;
 
 //GL light vars
 GLfloat light_pos[4] = {0, 0, 1.5, 1.0};
@@ -64,10 +72,6 @@ GLfloat light_diff[4] = {0.6, 0.6, 0.6, 1.0};
 GLfloat light_spec[4] = {0.8, 0.8, 0.8, 1.0};
 
 GameObject player;
-
-//constants
-const float MOVE_DELTA = -0.002f;
-const float MOUSE_DELTA = 0.001f;
 
 //Materials
 typedef struct materialStruct {
@@ -349,7 +353,7 @@ void resetPerspectiveProjection() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void drawFPS()
+void drawStats()
 {
   glPushMatrix();
   
@@ -358,11 +362,19 @@ void drawFPS()
   
   if (FPStime - timebase > 1000) {
     sprintf(FPSDisplay,"FPS:%4.2f",frame*1000.0/(FPStime-timebase));
+    sprintf(PointsDisplay,"H:%d",points);
+    sprintf(SecondsDisplay,"%.2f sec",((float)seconds)/1000.0);
     timebase = FPStime;		
     frame = 0;
   }
+  sprintf(SecondsDisplay,"%.2f sec",((float)seconds)/1000.0);
   glColor3f(1.0, 0.0, 0.0);
-  renderBitmapString(-.2,.7,0,FPSDisplay);
+  glLoadIdentity();
+  setOrthographicProjection();
+  renderBitmapString(1,15,0,FPSDisplay);
+  renderBitmapString(1,35,0,PointsDisplay);
+  renderBitmapString(1,55,0,SecondsDisplay);
+  resetPerspectiveProjection();
   
   glPopMatrix();
 }
@@ -394,7 +406,7 @@ GLvoid DrawScene(void)
   drawWireFramePlane();
   materials(RedFlat);
   drawGameObjects();
-  drawFPS();
+  drawStats();
 		
 	SDL_GL_SwapBuffers();
 }
@@ -444,6 +456,14 @@ GLboolean CheckKeys(int dt)
     z += -MOVE_DELTA * sin(ang_y);
   }
 
+  if(_keys[SDLK_KP_PLUS]){
+    MOVE_DELTA += -0.0002f;
+  }
+  
+  if(_keys[SDLK_KP_MINUS]){
+    MOVE_DELTA -= -0.0002f;
+  }
+  
   pos_x += x * dt;
   pos_y += y * dt;
   pos_z += z * dt;
@@ -452,10 +472,17 @@ GLboolean CheckKeys(int dt)
   {
     pos_y = 0.0f;
   }
+  
+  if(_keys[SDLK_HOME]){
+    pos_x = 0;
+    pos_y = 0;
+    pos_z = 0;
+    ang_x = 0;
+    ang_y = 0;
+    ang_z = 0;
+  }
     
   return false;
-
-  // Others are SDLK_LEFT, SDLK_UP, etc
 }
 
 void GenerateRandNumbers(float arr[])
@@ -546,38 +573,41 @@ int main(int argc, char *argv[])
 	//TIMER CODE
 	srand(500);
 	SDL_Init(SDL_INIT_TIMER);
-   SDL_AddTimer(Uint32 (1000), spawnGameObj, param);
-   //ENDTIMER CODE
+  SDL_AddTimer(Uint32 (1000), spawnGameObj, param);
+  //ENDTIMER CODE
 	setCameraMode(_windowWidth, _windowHeight);
-   //////////////////////////////Mesh Initialize Code//////
-   //make sure a file to read is specified
-     if (argc > 1) {
-       cout << "file " << argv[1] << endl;
-       //read-in the mesh file specified
-       ReadFile(argv[1]);
-       //only for debugging
-	   printFirstThree();
-       
-       //once the file is parsed find out the maximum extent to center and scale mesh
-       max_extent = max_x - min_x;
-       if (max_y - min_y > max_extent) max_extent = max_y - min_y;
-       cout << "max_extent " << max_extent << " max_x " << max_x << " min_x " << min_x << endl;
-       cout << "max_y " << max_y << " min_y " << min_y << " max_z " << max_z << " min_z " << min_z << endl;
-       
-       center.x = 0;
-       center.y = 0;
-       center.z = 1;
-	     //TODO divide by the number of vertices you read in!!!
-       center.x = cx/verts.size();
-       center.y = cy/verts.size();
-       center.z = cz/verts.size();
-       cout << "center " << center.x << " " << center.y << " " << center.z << endl;
-       cout << "scale by " << 1.0/(float)max_extent << endl;
-     } else {
-       cout << "format is: meshparser filename" << endl;
-     }
+	
+  //////////////////////////////Mesh Initialize Code//////
+  //make sure a file to read is specified
+  if (argc > 1) {
+    cout << "file " << argv[1] << endl;
+    //read-in the mesh file specified
+    ReadFile(argv[1]);
+    //only for debugging
+    printFirstThree();
 
-   //////////////////////////////End Mesh Code////////////
+    //once the file is parsed find out the maximum extent to center and scale mesh
+    max_extent = max_x - min_x;
+    if (max_y - min_y > max_extent) max_extent = max_y - min_y;
+    cout << "max_extent " << max_extent << " max_x " << max_x << " min_x " << min_x << endl;
+    cout << "max_y " << max_y << " min_y " << min_y << " max_z " << max_z << " min_z " << min_z << endl;
+
+    center.x = 0;
+    center.y = 0;
+    center.z = 1;
+    //TODO divide by the number of vertices you read in!!!
+    center.x = cx/verts.size();
+    center.y = cy/verts.size();
+    center.z = cz/verts.size();
+    cout << "center " << center.x << " " << center.y << " " << center.z << endl;
+    cout << "scale by " << 1.0/(float)max_extent << endl;
+    }
+    else 
+    {
+    cout << "format is: meshparser filename" << endl;
+  }
+  //////////////////////////////End Mesh Code////////////
+   
 	// Set window title
   SDL_WM_SetCaption("Lab1", 0);
   SDL_ShowCursor(SDL_DISABLE);
@@ -627,6 +657,7 @@ int main(int argc, char *argv[])
       }
       now = glutGet(GLUT_ELAPSED_TIME);
       dt = now - then;
+      seconds += dt;
       if (CheckKeys(dt)){
         running = 0;
       }
