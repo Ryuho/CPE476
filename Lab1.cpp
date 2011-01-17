@@ -13,9 +13,6 @@
 
 using namespace std;
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 240
-#define SCREEN_DEPTH 8
 #define FLT_MIN 1.1754E-38F
 #define FLT_MAX 1.1754E+38F
 
@@ -594,7 +591,7 @@ int main(int argc, char *argv[])
    //////////////////////////////End Mesh Code////////////
 	// Set window title
 	SDL_WM_SetCaption("Lab1", 0);
-
+  SDL_ShowCursor(SDL_DISABLE);
   then = glutGet(GLUT_ELAPSED_TIME);
   _keys = SDL_GetKeyState(NULL);
   
@@ -622,7 +619,7 @@ int main(int argc, char *argv[])
         ang_x -= mouseY * MOUSE_DELTA;
       
         SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
-        SDL_WarpMouse(SCREEN_WIDTH/2, SCREEN_HEIGHT/2); //center that bitch
+        SDL_WarpMouse(_windowWidth/2, _windowHeight/2);
         SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
 
       }     
