@@ -411,6 +411,8 @@ GLvoid DrawScene(void)
 	SDL_GL_SwapBuffers();
 }
 
+
+
 void setCameraMode(int width, int height) // reshape the window when it's moved or resized
 {
 
@@ -474,14 +476,25 @@ GLboolean CheckKeys(int dt)
     pos_x += x * dt;
     pos_y += y * dt;
     pos_z += z * dt;
+    
+    player.position.endX = pos_x;
+    player.position.endY = pos_y;
+    player.position.endZ = pos_z;
 
     if (pos_y < 0.0f)
     {
       pos_y = 0.0f;
     }
-    
-    //check for collison with game objects
-    
+  }
+  
+  //check for collison with game objects
+  int objIndex = player.collidingWithObjects(gameObjects);
+  while(objIndex != -1)
+  {
+    cout << "Player collided with #" << objIndex << "!" << endl;
+    gameObjects.erase (gameObjects.begin()+objIndex);
+    points++;
+    objIndex = player.collidingWithObjects(gameObjects);
   }
   
   if(_keys[SDLK_HOME]){
@@ -516,17 +529,26 @@ void GenerateRandNumbers(float arr[])
 
 Uint32 spawnGameObj(Uint32 interval, void *param)
 {
-   float arr[4],temp1,temp2,temp3,temp4; 
-   GenerateRandNumbers(arr);
-   temp1 = arr[0];
-   temp2 = arr[1];
-   temp3 = arr[2];
-   temp4 = arr[3];
-   if(gameObjects.size() < 10)
-   {
-	   gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,temp1,0.0f,temp2), *new MyVector(0.0f,0.0f,0.0f,temp3,0.0f,temp4), 0));
-	}
-	return 4000;
+  float arr[4],temp1,temp2,temp3,temp4;
+  GenerateRandNumbers(arr);
+  temp1 = arr[0];
+  temp2 = arr[1];
+  temp3 = arr[2];
+  temp4 = arr[3];
+  //if(gameObjects.size() < 10)
+  //{
+     gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,temp1,0.0f,temp2), *new MyVector(0.0f,0.0f,0.0f,temp3,0.0f,temp4), .1));
+  //}
+  return interval;
+}
+
+Uint32 gameObjStep(Uint32 interval, void *param)
+{
+  for(int i = 0; i <  gameObjects.size();i++)
+  {
+     gameObjects[i].step(seconds/1000.0);
+  }
+  return interval;
 }
 
 void pos_light() {
@@ -585,7 +607,9 @@ int main(int argc, char *argv[])
 	//TIMER CODE
 	srand(500);
 	SDL_Init(SDL_INIT_TIMER);
-  SDL_AddTimer(Uint32 (1000), spawnGameObj, param);
+  SDL_AddTimer(Uint32 (100), spawnGameObj, param);
+  SDL_AddTimer(Uint32 (10), gameObjStep, param);
+  
   //ENDTIMER CODE
 	setCameraMode(_windowWidth, _windowHeight);
 	

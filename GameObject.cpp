@@ -38,19 +38,19 @@ void GameObject::setBoundingBox(float llX, float llY, float llZ, float urX, floa
    boundingBox.upperRightZ = urZ;
 }
 
-int GameObject::Collision(BoundingBox colliding)
+int GameObject::Collision(MyVector pos, BoundingBox colliding)
 {
-   if(boundingBox.lowerLeftX > colliding.upperRightX)
+   if((position.endX + boundingBox.lowerLeftX) > (pos.endX + colliding.upperRightX))
       return false;
-   if(boundingBox.lowerLeftY > colliding.upperRightY) 
+   if((position.endY + boundingBox.lowerLeftY) > (pos.endY + colliding.upperRightY))
       return false;  
-   if(boundingBox.lowerLeftZ > colliding.upperRightZ)
+   if((position.endZ + boundingBox.lowerLeftZ) > (pos.endZ + colliding.upperRightZ))
       return false;   
-   if(boundingBox.upperRightX > colliding.lowerLeftX) 
+   if((position.endX + boundingBox.upperRightX) < (pos.endX + colliding.lowerLeftX))
       return false;
-   if(boundingBox.upperRightY < colliding.lowerLeftY)
+   if((position.endY + boundingBox.upperRightY) < (pos.endY + colliding.lowerLeftY))
       return false;
-   if(boundingBox.upperRightZ < colliding.lowerLeftZ)
+   if((position.endZ + boundingBox.upperRightZ) < (pos.endZ + colliding.lowerLeftZ))
       return false;
    return true;
 }
@@ -61,17 +61,19 @@ void GameObject::setbounds(float boundX, float boundZ)
    boundsZ = boundZ;
 }
 
+// -1 if not colliding
+// int if colliding with the index given
 int GameObject::collidingWithObjects(vector<GameObject> gameObjects)
 {
 
    for(int i = 0;i < gameObjects.size();i++)
    {
-      if(Collision(gameObjects[i].boundingBox) != 0 && gameObjects[i].position.endX != position.endX && gameObjects[i].position.endZ != position.endZ)
+      if(Collision(gameObjects[i].position, gameObjects[i].boundingBox) != 0)
       {
-         return 1;
+         return i;
       }
    }
-   return 0;
+   return -1;
 }
 
 void GameObject::step(float dt)
@@ -87,7 +89,7 @@ other object, do not update the position.*/
    MyVector newPosition = *new MyVector(0,0,0,0,0,0);
    float theta = 0;
    
-   timeInSec = dt/60.0;
+   timeInSec = dt;
    
    theta = atan(direction.endZ/direction.endX);// need to convert to radians?
    newPosition.endX = cos(theta) * (timeInSec * velocity);
