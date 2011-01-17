@@ -53,15 +53,36 @@ int frame = 0;
 int FPStime,timebase=0;
 char FPSDisplay [11];
 
-//
+//Delta Time Camera
 int now = 0;
 int then = 0;
+
+//GL light vars
+GLfloat light_pos[4] = {0, 0, 1.5, 1.0};
+GLfloat light_amb[4] = {0.6, 0.6, 0.6, 1.0};
+GLfloat light_diff[4] = {0.6, 0.6, 0.6, 1.0};
+GLfloat light_spec[4] = {0.8, 0.8, 0.8, 1.0};
+
+GameObject player;
 
 //constants
 const float MOVE_DELTA = -0.002f;
 const float MOUSE_DELTA = 0.001f;
 
+//Materials
+typedef struct materialStruct {
+  GLfloat ambient[4];
+  GLfloat diffuse[4];
+  GLfloat specular[4];
+  GLfloat shininess[1];
+} materialStruct;
 
+materialStruct RedFlat = {
+  {0.3, 0.0, 0.0, 1.0},
+  {0.9, 0.0, 0.0, 1.0},
+  {0.0, 0.0, 0.0, 1.0},
+  {0.0}
+};
 
 //TODO define objects to store 1) vertices 2) faces - be sure you understand the file format
 typedef struct  vertice{
@@ -91,6 +112,14 @@ MyVector myVects;
 void readLine(char* str);
 void readStream(istream& is);
 
+
+void materials(materialStruct materials) {
+  glMaterialfv(GL_FRONT, GL_AMBIENT, materials.ambient);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, materials.diffuse);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, materials.specular);
+  glMaterialfv(GL_FRONT, GL_SHININESS, materials.shininess);
+}
+
 //open the file for reading
 void ReadFile(char* filename) {
   
@@ -103,6 +132,21 @@ void ReadFile(char* filename) {
     readStream(in_f);
   }
   
+}
+
+void faceNorms()
+{
+   for(int index = 0; index < faces.size();index++)
+   {
+      faces[index].normX = (verts[faces[index].three].x + verts[faces[index].two].x + verts[faces[index].one].x);
+      faces[index].normY = (verts[faces[index].three].y + verts[faces[index].two].y + verts[faces[index].one].y);
+      faces[index].normZ = (verts[faces[index].three].z + verts[faces[index].two].z + verts[faces[index].one].z);
+      
+      float mag = sqrt(pow(faces[index].normX,2)+pow(faces[index].normY,2)+pow(faces[index].normZ,2));
+      faces[index].normX /= mag;
+      faces[index].normY /= mag;
+      faces[index].normZ /= mag;
+   }
 }
 
 //process the input stream from the file
@@ -208,7 +252,7 @@ void readLine(char* str) {
     faces.push_back(tempTri);
     //calcNormals(faces.size()-1);
   }
-  //faceNorms();
+  faceNorms();
 }
 
 //A simple routine that prints the first three vertices and faces to test that you successfully stored the data your data structures....
@@ -223,11 +267,10 @@ void printFirstThree() {
 
 void drawTria(int index) {
   glBegin(GL_TRIANGLES);
-  glNormal3f(verts[faces[index].one].normX,verts[faces[index].one].normY,verts[faces[index].one].normZ);
+  glNormal3f(faces[index].normX,faces[index].normY ,faces[index].normZ);
+  
   glVertex3f(verts[faces[index].one].x,verts[faces[index].one].y,verts[faces[index].one].z);
-  glNormal3f(verts[faces[index].two].normX,verts[faces[index].two].normY,verts[faces[index].two].normZ);
   glVertex3f(verts[faces[index].two].x,verts[faces[index].two].y,verts[faces[index].two].z);
-  glNormal3f(verts[faces[index].three].normX,verts[faces[index].three].normY,verts[faces[index].three].normZ);
   glVertex3f(verts[faces[index].three].x,verts[faces[index].three].y,verts[faces[index].three].z);
   glEnd();
 }
@@ -349,6 +392,7 @@ GLvoid DrawScene(void)
   glTranslatef(-pos_x, -pos_y, -pos_z);
     
   drawWireFramePlane();
+  materials(RedFlat);
   drawGameObjects();
   drawFPS();
 		
@@ -363,7 +407,8 @@ void setCameraMode(int width, int height) // reshape the window when it's moved 
   gluPerspective(90,(float)width/(float)height,0.1,15);
 
 	glMatrixMode(GL_MODELVIEW);
-	glViewport(0, 0, width, height);
+	glViewport(0, 0, width, height);
+
 }
 
 GLboolean CheckKeys(int dt)
@@ -438,10 +483,38 @@ Uint32 spawnGameObj(Uint32 interval, void *param)
    temp1 = arr[0];
    temp2 = arr[1];
    temp3 = arr[2];
-   temp4 = arr[3];	
-	gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,temp1,0.0f,temp2), *new MyVector(0.0f,0.0f,0.0f,temp3,0.0f,temp4), 0));
-	cout << "Entered Timer" << endl;
+   temp4 = arr[3];
+   if(gameObjects.size() < 10)
+   {
+	   gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,temp1,0.0f,temp2), *new MyVector(0.0f,0.0f,0.0f,temp3,0.0f,temp4), 0));
+	}
 	return 4000;
+}
+
+void pos_light() {
+  //set the light's position
+  glMatrixMode(GL_MODELVIEW);
+  glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+  glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
+  glLightfv(GL_LIGHT2, GL_POSITION, light_pos);
+  glLightfv(GL_LIGHT3, GL_POSITION, light_pos);
+  
+}
+
+void glInit()
+{
+   glEnable(GL_DEPTH_TEST);
+   glEnable(GL_NORMALIZE);
+   glEnable(GL_LIGHT0);
+   //set up the diffuse, ambient and specular components for the light
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diff);
+   glLightfv(GL_LIGHT0, GL_AMBIENT, light_amb);
+   glLightfv(GL_LIGHT0, GL_SPECULAR, light_spec);
+   //specify our lighting model as 1 normal per face
+   glShadeModel(GL_FLAT);
+   materials(RedFlat);
+   glEnable(GL_LIGHTING);
+   pos_light();
 }
 
 int main(int argc, char *argv[])
@@ -454,7 +527,9 @@ int main(int argc, char *argv[])
   min_x = min_y = min_z = FLT_MAX;
   cx =cy = cz = 0;
   max_extent = 1.0;
+  player = * new GameObject(*new MyVector(0.f,0.f,0.f,0.f,0.f,0.f),*new MyVector(0.f,0.f,0.f,0.f,0.f,0.f),0);
   //SDL INITIALIZATIONS
+  
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		cout << "Unable to initialize SDL: " << SDL_GetError() << endl;
@@ -504,7 +579,7 @@ int main(int argc, char *argv[])
 
    //////////////////////////////End Mesh Code////////////
 	// Set window title
-	SDL_WM_SetCaption("Lab1", 0);
+  SDL_WM_SetCaption("Lab1", 0);
   SDL_ShowCursor(SDL_DISABLE);
   then = glutGet(GLUT_ELAPSED_TIME);
   _keys = SDL_GetKeyState(NULL);
@@ -512,10 +587,10 @@ int main(int argc, char *argv[])
   int now = glutGet(GLUT_ELAPSED_TIME);
   int dt = now - then;
 
-	int running = 1;
+  int running = 1;
   DLid = createDL();
   
-  
+  glInit();
   while (running)
   {
     DrawScene();

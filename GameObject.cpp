@@ -28,6 +28,16 @@ GameObject::~GameObject(void)
 {
 }
 
+void GameObject::setBoundingBox(float llX, float llY, float llZ, float urX, float urY, float urZ)
+{
+   boundingBox.lowerLeftX = llX;
+   boundingBox.lowerLeftY = llY;
+   boundingBox.lowerLeftZ = llZ;
+   boundingBox.upperRightX = urX;
+   boundingBox.upperRightY = urY;
+   boundingBox.upperRightZ = urZ;
+}
+
 int GameObject::Collision(BoundingBox colliding)
 {
    if(boundingBox.lowerLeftX > colliding.upperRightX)
