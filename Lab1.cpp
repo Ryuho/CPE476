@@ -425,7 +425,7 @@ void setCameraMode(int width, int height) // reshape the window when it's moved 
 
 GLboolean CheckKeys(int dt)
 {
-
+  bool moved = false;
   if (_keys[SDLK_ESCAPE])
   {
     return true;
@@ -438,22 +438,26 @@ GLboolean CheckKeys(int dt)
     x += -MOVE_DELTA * sin(ang_y);
     z += -MOVE_DELTA * cos(ang_y);
     y += MOVE_DELTA * sin(ang_x);
+    moved = true;
   }
 
   if (_keys[SDLK_w]) {
     x += MOVE_DELTA * sin(ang_y);
     z += MOVE_DELTA * cos(ang_y);
     y += -MOVE_DELTA * sin(ang_x);
+    moved = true;
   }
 
   if (_keys[SDLK_d]) {
     x += -MOVE_DELTA * cos(ang_y);
     z += MOVE_DELTA * sin(ang_y);
+    moved = true;
   }
 
   if (_keys[SDLK_a]) {
     x += MOVE_DELTA * cos(ang_y);
     z += -MOVE_DELTA * sin(ang_y);
+    moved = true;
   }
 
   if(_keys[SDLK_KP_PLUS]){
@@ -464,13 +468,20 @@ GLboolean CheckKeys(int dt)
     MOVE_DELTA -= -0.0002f;
   }
   
-  pos_x += x * dt;
-  pos_y += y * dt;
-  pos_z += z * dt;
-
-  if (pos_y < 0.0f)
+  if(moved)
   {
-    pos_y = 0.0f;
+    //increment the amount of (speed * time) = distance
+    pos_x += x * dt;
+    pos_y += y * dt;
+    pos_z += z * dt;
+
+    if (pos_y < 0.0f)
+    {
+      pos_y = 0.0f;
+    }
+    
+    //check for collison with game objects
+    
   }
   
   if(_keys[SDLK_HOME]){
@@ -555,8 +566,9 @@ int main(int argc, char *argv[])
   cx =cy = cz = 0;
   max_extent = 1.0;
   player = * new GameObject(*new MyVector(0.f,0.f,0.f,0.f,0.f,0.f),*new MyVector(0.f,0.f,0.f,0.f,0.f,0.f),0);
-  //SDL INITIALIZATIONS
+  player.setBoundingBox(-0.1, -0.1, 0, 0.1, 0.1, 0.1);
   
+  //SDL INITIALIZATIONS
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		cout << "Unable to initialize SDL: " << SDL_GetError() << endl;
@@ -601,9 +613,9 @@ int main(int argc, char *argv[])
     center.z = cz/verts.size();
     cout << "center " << center.x << " " << center.y << " " << center.z << endl;
     cout << "scale by " << 1.0/(float)max_extent << endl;
-    }
-    else 
-    {
+  }
+  else 
+  {
     cout << "format is: meshparser filename" << endl;
   }
   //////////////////////////////End Mesh Code////////////
@@ -636,7 +648,14 @@ int main(int argc, char *argv[])
         mouseY = event.motion.yrel;
         ang_y -= mouseX * MOUSE_DELTA;
         ang_x -= mouseY * MOUSE_DELTA;
-      
+        if(ang_x <= -(M_PI/2.0))
+        {
+          ang_x = -(M_PI/2.0);
+        }
+        if(ang_x >= (M_PI/2.0))
+        {
+          ang_x = (M_PI/2.0);
+        }
         SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
         SDL_WarpMouse(_windowWidth/2, _windowHeight/2);
         SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
