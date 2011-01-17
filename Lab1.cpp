@@ -5,6 +5,7 @@
 #include <fstream>
 #include <GL/glut.h>
 #include <GL/gl.h>
+#include <math.h>
 #include "SDL.h"
 #include "MyVector.h"
 #include "GameObject.h"
@@ -28,13 +29,16 @@ float max_x, max_y, max_z, min_x, min_y, min_z;
 float max_extent;
 
 //Mouse Movement Vars
-float mouseX;
-float mouseY;
+int mouseX;
+int mouseY;
 
 //CameraVars
-MyVector eyePoint;
-MyVector lookAt;
-MyVector up;
+float ang_x = 0.0;
+float ang_y = 0.0;
+float ang_z = 0.0;
+float pos_x = 0.0;
+float pos_y = 0.0;
+float pos_z = 0.0;
 
 //Player Movement Vars
 float forewardBackwardMovement;
@@ -51,6 +55,14 @@ GLuint createDL(void);
 int frame = 0;
 int FPStime,timebase=0;
 char FPSDisplay [11];
+
+//
+int now = 0;
+int then = 0;
+
+//constants
+const float MOVE_DELTA = -0.002f;
+const float MOUSE_DELTA = 0.001f;
 
 
 
@@ -213,29 +225,17 @@ void printFirstThree() {
 
 //TODO imlement a drawing routine to draw triangles as wireframe
 void drawTria(int index) {
-    /*if(mode != 6)
-    {
-       glNormal3f((faces[index].normX/30.0) + faces[index].centX,(faces[index].normY/30.0) + faces[index].centY ,(faces[index].normZ/30.0) + faces[index].centZ);
-    }
-    if(fillPoly)
-    {*/
-       glBegin(GL_TRIANGLES);
-    /*}
-    else
-    {
-       glBegin(GL_LINE_LOOP);
-    }*/
-      glColor3f(0.0, 0.0, 0.5);
-         glNormal3f(verts[faces[index].one].normX,verts[faces[index].one].normY,verts[faces[index].one].normZ);
-         glVertex3f(verts[faces[index].one].x,verts[faces[index].one].y,verts[faces[index].one].z);
-         glNormal3f(verts[faces[index].two].normX,verts[faces[index].two].normY,verts[faces[index].two].normZ);
-         glVertex3f(verts[faces[index].two].x,verts[faces[index].two].y,verts[faces[index].two].z);
-         glNormal3f(verts[faces[index].three].normX,verts[faces[index].three].normY,verts[faces[index].three].normZ);
-         glVertex3f(verts[faces[index].three].x,verts[faces[index].three].y,verts[faces[index].three].z);
-    glEnd();
+  glBegin(GL_TRIANGLES);
+  glNormal3f(verts[faces[index].one].normX,verts[faces[index].one].normY,verts[faces[index].one].normZ);
+  glVertex3f(verts[faces[index].one].x,verts[faces[index].one].y,verts[faces[index].one].z);
+  glNormal3f(verts[faces[index].two].normX,verts[faces[index].two].normY,verts[faces[index].two].normZ);
+  glVertex3f(verts[faces[index].two].x,verts[faces[index].two].y,verts[faces[index].two].z);
+  glNormal3f(verts[faces[index].three].normX,verts[faces[index].three].normY,verts[faces[index].three].normZ);
+  glVertex3f(verts[faces[index].three].x,verts[faces[index].three].y,verts[faces[index].three].z);
+  glEnd();
 }
 
-float p2wx(int xp){
+/*float p2wx(int xp){
 	float newX = 0;
 	newX = (2.0/((float)_windowHeight))  *  ((float)xp - ((float) _windowWidth/2.0));
 	return newX;
@@ -284,7 +284,7 @@ void calculateUVW(MyVector lookAt, MyVector eyePoint)
      vectorV.endZ = vectorW.endX * vectorU.endY - vecgit@github.com:Ryuho/CPE476.gittorW.endY * vectorU.endX;
      
      
-     */
+     
 }
 
 void calculateEyePoint()
@@ -305,12 +305,15 @@ void calculateEyePoint()
    eyePoint.endX = radius * cos(phi) * cos(theta);
    eyePoint.endY = radius * sin(phi);
    eyePoint.endZ = radius * cos(phi)* cos(90.0 - theta);
-   */
+   
 }
+*/
+
 void drawBunny(void){
-   for(unsigned int j = 0; j < faces.size(); j++) {
-       drawTria(j);
-     }
+
+  for(unsigned int j = 0; j < faces.size(); j++) {
+      drawTria(j);
+    }
 }
 
 GLuint createDL() {
@@ -336,13 +339,28 @@ void renderBitmapString(float x, float y, float z, char *string)
 
 void drawWireFramePlane()
 {
-   glBegin(GL_POLYGON);
-    glColor3f(0,0,1.0);
-    glVertex3f(-5.,0,5);
-    glVertex3f(5,0,5);
-    glVertex3f(5,0,-5);
-    glVertex3f(-5,0,-5);
-   glEnd();
+  glPushMatrix(); {
+    // Draw Grid
+    glDisable(GL_LIGHTING);
+    glColor3f(0, 1, 0);
+    glBegin(GL_LINES); {
+      for (float i = -4.0; i <= 4.0f; i += 1) {
+        glVertex3f(i, 0, -4.0f);
+        glVertex3f(i, 0, 4.0f);
+
+        glVertex3f(-4.0f, 0, i);
+        glVertex3f(4.0f, 0, i);
+      }
+    }
+    glEnd();
+
+    glEnable(GL_LIGHTING);
+    glPushMatrix();
+    //draw_all_objects();
+    glPopMatrix();
+    glDisable(GL_LIGHTING);
+  }
+  glPopMatrix();
 }
 
 void setOrthographicProjection() {
@@ -373,109 +391,113 @@ void resetPerspectiveProjection() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-GLvoid DrawScene(void)
+void drawFPS()
 {
-    /*1. GazeVect = lookAtVect - eyePointVect
-      2. VectorW = -(GazeVect/Mag(GazeVect))
-      3. VectorU = (UpVect X VectorW)/Mag(VectorW X UpVect)
-      4. VectorV = VectorW X Vector U
-      calculateEyePoint();
-      calculateUVW(lookAt, eyePoint);
-      */
-    //cout << "A Redraw was Posted " << endl;
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    //gluLookAt(0, .5, .5, 0, 0, -1, 0, 1, 0); 
-    gluLookAt(eyePoint.endX, eyePoint.endY, eyePoint.endZ,
-              lookAt.endX, lookAt.endY, lookAt.endZ,
-              up.endX, up.endY, up.endZ);
-    glPushMatrix();
-    drawWireFramePlane();
-    glPopMatrix();
-    glPushMatrix();
-   
-   //drawBunny();
-   /*glBegin(GL_POLYGON);
-   glColor3f(1.0,0,0);
-      glVertex3f(-.1,.0,-.1);
-      glVertex3f(.1,0,-.1);
-      glVertex3f(.1,.2,-.1);
-      glVertex3f(-.1,.2,-.1);
-   glEnd();*/
-   //glCallList(DLid);
+  glPushMatrix();
+  /////////////////////////////////////////////////////////////FPS CODE///////////////////////////////////////////
+  frame++;
+  FPStime=glutGet(GLUT_ELAPSED_TIME);
+
+  if (FPStime - timebase > 1000) {
+    sprintf(FPSDisplay,"FPS:%4.2f",frame*1000.0/(FPStime-timebase));
+    timebase = FPStime;		
+    frame = 0;
+    //renderBitmapCharacher(-.2,.7,0,FPSDisplay);
+  }
+  glColor3f(0.0, 1.0, 0.0);
+  //////////////////////////////////////////////////////////////End FPS Code///////////////////////////////////////
+  renderBitmapString(-.2,.7,0,FPSDisplay);
+  glPopMatrix();
+ 
+}
+
+void drawGameObjects()
+{
+   glPushMatrix();
    for(int i = 0;i < gameObjects.size();i++)
    {//cout << gameObjects.size() << endl;
       glPushMatrix();
-      glTranslatef(gameObjects[i].position.endX,0,gameObjects[i].position.endZ);
+      glColor3f(0.0, 0.0, 0.5);
+      glTranslatef(gameObjects[i].position.endX,-.03,gameObjects[i].position.endZ);
       glCallList(DLid);
       glPopMatrix();
    }
    glPopMatrix();
-   
-   glPushMatrix();
-    /////////////////////////////////////////////////////////////FPS CODE///////////////////////////////////////////
-    frame++;
-	FPStime=glutGet(GLUT_ELAPSED_TIME);
-	
-	if (FPStime - timebase > 1000) {
-		sprintf(FPSDisplay,"FPS:%4.2f",
-			frame*1000.0/(FPStime-timebase));
-		timebase = FPStime;		
-		frame = 0;
-		//renderBitmapCharacher(-.2,.7,0,FPSDisplay);
-	}
-	
-	//////////////////////////////////////////////////////////////End FPS Code///////////////////////////////////////
-   glPopMatrix();
-   /*glColor3f(0.0f,1.0f,1.0f);
-	setOrthographicProjection();
-	glPushMatrix();
-	glLoadIdentity();*/
-	renderBitmapString(-.2,.7,0,FPSDisplay);
-	/*glPopMatrix();
-	resetPerspectiveProjection();*/
+}
+
+GLvoid DrawScene(void)
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glRotatef(360.0f - (ang_x * (180.0f / M_PI)), 1, 0, 0);
+  glRotatef(360.0f - (ang_y * (180.0f / M_PI)), 0, 1, 0);
+  glTranslatef(-pos_x, -pos_y, -pos_z);
+    
+  drawWireFramePlane();
+  drawGameObjects();
+  drawFPS();
 		
 	SDL_GL_SwapBuffers();
 }
 
 void setCameraMode(int width, int height) // reshape the window when it's moved or resized
 {
-   //GW = w;
-	//GH = h;
-	
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//if(ortho)
-	//{
-	   //glOrtho( -2.0*(float)width/height, 2.0*(float)width/height, -2.0, 2.0, 1.0, 15.0);
-	//}
-	//else
-	//{
-	   gluPerspective(90,(float)width/(float)height,1,15);
-	//}
+  gluPerspective(90,(float)width/(float)height,0.1,15);
+
 	glMatrixMode(GL_MODELVIEW);
-	glViewport(0, 0, width, height);
-	
-	//DrawScene();
-	//glutPostRedisplay();
+	glViewport(0, 0, width, height);
 }
 
-GLboolean CheckKeys(void)
+GLboolean CheckKeys(int dt)
 {
-	if (_keys[SDLK_ESCAPE])
-		return true;
-   else if(_keys[SDLK_UP])
-       forewardBackwardMovement+=.1;
-   else if(_keys[SDLK_LEFT])
-       leftRightMovement-=.1;
-   else if(_keys[SDLK_DOWN])
-       forewardBackwardMovement-=.1;
-   else if(_keys[SDLK_RIGHT])
-       leftRightMovement+=.1;
-	return false;
 
-	// Others are SDLK_LEFT, SDLK_UP, etc
+  if (_keys[SDLK_ESCAPE])
+  {
+    return true;
+  }
+    
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  if (_keys[SDLK_s]) {
+    x += -MOVE_DELTA * sin(ang_y);
+    z += -MOVE_DELTA * cos(ang_y);
+    y += MOVE_DELTA * sin(ang_x);
+  }
+
+  if (_keys[SDLK_w]) {
+    x += MOVE_DELTA * sin(ang_y);
+    z += MOVE_DELTA * cos(ang_y);
+    y += -MOVE_DELTA * sin(ang_x);
+  }
+
+  if (_keys[SDLK_d]) {
+    x += -MOVE_DELTA * cos(ang_y);
+    z += MOVE_DELTA * sin(ang_y);
+  }
+
+  if (_keys[SDLK_a]) {
+    x += MOVE_DELTA * cos(ang_y);
+    z += -MOVE_DELTA * sin(ang_y);
+  }
+
+  pos_x += x * dt;
+  pos_y += y * dt;
+  pos_z += z * dt;
+
+  if (pos_y < 0.0f)
+  {
+    pos_y = 0.0f;
+  }
+    
+  return false;
+
+  // Others are SDLK_LEFT, SDLK_UP, etc
 }
 
 void GenerateRandNumbers(float arr[])
@@ -496,7 +518,7 @@ void GenerateRandNumbers(float arr[])
    
 }
 
-Uint32 FPSTimer(Uint32 interval, void *param)
+Uint32 spawnGameObj(Uint32 interval, void *param)
 {
    float arr[4],temp1,temp2,temp3,temp4; 
    GenerateRandNumbers(arr);
@@ -509,23 +531,19 @@ Uint32 FPSTimer(Uint32 interval, void *param)
 	return 4000;
 }
 
-int main(int argc, char *argv[]) {
-    //Initialization
-    glutInit(&argc, argv);
-    _windowWidth = 600;
-    _windowHeight = 600;
-    mouseX = 0;
-    mouseY = 0;
-    max_x = max_y = max_z = FLT_MIN;
-    min_x = min_y = min_z = FLT_MAX;
-    cx =cy = cz = 0;
-    max_extent = 1.0;
-    eyePoint = * new MyVector(0,0,0,0,.5,.5);
-    lookAt = * new MyVector(0,0,0,0,0,-1);
-    up = *new MyVector(0,0,0,0,1,0);
-    forewardBackwardMovement = 0;
-    leftRightMovement = 0;
-    //SDL INITIALIZATIONS
+int main(int argc, char *argv[])
+{
+  //Initialization
+  glutInit(&argc, argv);
+  _windowWidth = 600;
+  _windowHeight = 600;
+  mouseX = 0;
+  mouseY = 0;
+  max_x = max_y = max_z = FLT_MIN;
+  min_x = min_y = min_z = FLT_MAX;
+  cx =cy = cz = 0;
+  max_extent = 1.0;
+  //SDL INITIALIZATIONS
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		cout << "Unable to initialize SDL: " << SDL_GetError() << endl;
@@ -537,14 +555,14 @@ int main(int argc, char *argv[]) {
 		cout << "Unable to create OpenGL scene: " << SDL_GetError() << endl;
 		exit(2);
 	}
-	glClearColor( 1.0, 1.0 ,1.0, 1);
+	//glClearColor( 1.0, 1.0 ,1.0, 1);
 	void *param;
 	//TIMER CODE
 	srand(500);
 	SDL_Init(SDL_INIT_TIMER);
-   SDL_AddTimer(Uint32 (1000), FPSTimer, param);
+   SDL_AddTimer(Uint32 (1000), spawnGameObj, param);
    //ENDTIMER CODE
-	//setCameraMode(_windowWidth, _windowHeight);
+	setCameraMode(_windowWidth, _windowHeight);
    //////////////////////////////Mesh Initialize Code//////
    //make sure a file to read is specified
      if (argc > 1) {
@@ -576,47 +594,59 @@ int main(int argc, char *argv[]) {
    //////////////////////////////End Mesh Code////////////
 	// Set window title
 	SDL_WM_SetCaption("Lab1", 0);
-   
+
+  then = glutGet(GLUT_ELAPSED_TIME);
+  _keys = SDL_GetKeyState(NULL);
+  
+  int now = glutGet(GLUT_ELAPSED_TIME);
+  int dt = now - then;
+
 	int running = 1;
-   DLid = createDL();
-	while (running)
-	{
-		DrawScene();
+  DLid = createDL();
+  
+  
+  while (running)
+  {
+    DrawScene();
+    SDL_Event event;
+    float mouseButtonDown = 0;
+    while (SDL_PollEvent(&event))
+    {
+      if (event.type == SDL_QUIT){
+        running = 0;
+      }
+      if(event.type == SDL_MOUSEMOTION){
+        mouseX = event.motion.xrel;
+        mouseY = event.motion.yrel;
+        ang_y -= mouseX * MOUSE_DELTA;
+        ang_x -= mouseY * MOUSE_DELTA;
+      
+        SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
+        SDL_WarpMouse(SCREEN_WIDTH/2, SCREEN_HEIGHT/2); //center that bitch
+        SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
 
-		SDL_Event event;
-      float mouseButtonDown = 0;
-		while (SDL_PollEvent(&event))
-		{
-			if (event.type == SDL_QUIT)
-				running = 0;
-         if(event.type == SDL_MOUSEMOTION)
-         {
-             if(mouseButtonDown)
-             {
-               //keep track of movement for camera motion, set mouse movement variable here.
-               mouseX = p2wx(event.motion.xrel);
-               mouseY = p2wy(event.motion.yrel);
-             }
-         }     
-         if(event.type == SDL_MOUSEBUTTONDOWN)
-         {
-               printf("Mouse button %d pressed at (%d,%d)\n",
-                      event.button.button, event.button.x, event.button.y);
-               mouseButtonDown = 1;
-         }
-         if (event.type == SDL_MOUSEBUTTONUP)
-         {
-            printf("The mouse is up\n");
-            mouseButtonDown = 0;
-         }
+      }     
+      if(event.type == SDL_MOUSEBUTTONDOWN)
+      {
+        printf("Mouse button %d pressed at (%d,%d)\n",event.button.button, event.button.x, event.button.y);
+        mouseButtonDown = 1;
+      }
+      if (event.type == SDL_MOUSEBUTTONUP)
+      {
+        printf("The mouse is up\n");
+        mouseButtonDown = 0;
+      }
 
-			_keys = SDL_GetKeyState(NULL);
-		}
+      _keys = SDL_GetKeyState(NULL);
+      }
+      now = glutGet(GLUT_ELAPSED_TIME);
+      dt = now - then;
+      if (CheckKeys(dt)){
+        running = 0;
+      }
+      then = glutGet(GLUT_ELAPSED_TIME);
+  }
 
-		if (CheckKeys())
-			running = 0;
-	}
-
-	SDL_Quit();
-   return 0;
+  SDL_Quit();
+  return 0;
 }
