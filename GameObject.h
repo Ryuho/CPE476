@@ -17,7 +17,7 @@ public:
       } BoundingBox;
 
    GameObject(void);
-   GameObject(MyVector _position, MyVector _direction, float velocity, BoundingBox _boundingBox);
+   GameObject(MyVector _position, MyVector _direction, float velocity);//, BoundingBox _boundingBox);
    int Collision(BoundingBox colliding);
    void setbounds(float boundX, float boundZ);
    ~GameObject(void);

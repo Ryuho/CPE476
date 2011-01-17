@@ -281,7 +281,7 @@ void calculateUVW(MyVector lookAt, MyVector eyePoint)
      //Step4. Z
      vectorV.endX = vectorW.endY * vectorU.endZ - vectorW.endZ * vectorU.endY;
      vectorV.endY = vectorW.endZ * vectorU.endX - vectorW.endX * vectorU.endZ;
-     vectorV.endZ = vectorW.endX * vectorU.endY - vectorW.endY * vectorU.endX;
+     vectorV.endZ = vectorW.endX * vectorU.endY - vecgit@github.com:Ryuho/CPE476.gittorW.endY * vectorU.endX;
      
      
      */
@@ -314,27 +314,15 @@ void drawBunny(void){
 }
 
 GLuint createDL() {
-	GLuint bunnyDL,loopDL;
+	GLuint bunnyDL;
 
 	bunnyDL = glGenLists(1);
-	loopDL = glGenLists(1);
 
 	glNewList(bunnyDL,GL_COMPILE);
 	drawBunny();
-   //drawSnowMan();
 	glEndList();
 
-	glNewList(loopDL,GL_COMPILE);
-	for(int i = -3; i < 3; i++)
-		for(int j=-3; j < 3; j++) {
-			glPushMatrix();
-			glTranslatef(i*.5,0,j * .5);
-			glCallList(bunnyDL);
-			glPopMatrix();
-		}
-	glEndList();
-
-	return(loopDL);
+	return(bunnyDL);
 }
 
 void renderBitmapString(float x, float y, float z, char *string)
@@ -346,19 +334,43 @@ void renderBitmapString(float x, float y, float z, char *string)
   }
 }
 
-void renderBitmapCharacher(float x, float y, float z, char *string)
-{
-  
-  char *c;
-  glRasterPos3f(x, y,z);
-  for (c=string; *c != '\0'; c++) {
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-  }
-}
-
 void drawWireFramePlane()
 {
-   
+   glBegin(GL_POLYGON);
+    glColor3f(0,0,1.0);
+    glVertex3f(-5.,0,5);
+    glVertex3f(5,0,5);
+    glVertex3f(5,0,-5);
+    glVertex3f(-5,0,-5);
+   glEnd();
+}
+
+void setOrthographicProjection() {
+
+	// switch to projection mode
+	glMatrixMode(GL_PROJECTION);
+	// save previous matrix which contains the 
+	//settings for the perspective projection
+	glPushMatrix();
+	// reset matrix
+	glLoadIdentity();
+	// set a 2D orthographic projection
+	gluOrtho2D(0, _windowWidth, 0, _windowHeight);
+	// invert the y axis, down is positive
+	glScalef(1, -1, 1);
+	// mover the origin from the bottom left corner
+	// to the upper left corner
+	glTranslatef(0, -_windowHeight, 0);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void resetPerspectiveProjection() {
+	// set the current matrix to GL_PROJECTION
+	glMatrixMode(GL_PROJECTION);
+	// restore previous settings
+	glPopMatrix();
+	// get back to GL_MODELVIEW matrix
+	glMatrixMode(GL_MODELVIEW);
 }
 
 GLvoid DrawScene(void)
@@ -373,15 +385,35 @@ GLvoid DrawScene(void)
     //cout << "A Redraw was Posted " << endl;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
     glMatrixMode(GL_MODELVIEW);
-    //glPushMatrix();
     glLoadIdentity();
     //gluLookAt(0, .5, .5, 0, 0, -1, 0, 1, 0); 
     gluLookAt(eyePoint.endX, eyePoint.endY, eyePoint.endZ,
               lookAt.endX, lookAt.endY, lookAt.endZ,
               up.endX, up.endY, up.endZ);
-    //glPopMatrix();
-    
     glPushMatrix();
+    drawWireFramePlane();
+    glPopMatrix();
+    glPushMatrix();
+   
+   //drawBunny();
+   /*glBegin(GL_POLYGON);
+   glColor3f(1.0,0,0);
+      glVertex3f(-.1,.0,-.1);
+      glVertex3f(.1,0,-.1);
+      glVertex3f(.1,.2,-.1);
+      glVertex3f(-.1,.2,-.1);
+   glEnd();*/
+   //glCallList(DLid);
+   for(int i = 0;i < gameObjects.size();i++)
+   {//cout << gameObjects.size() << endl;
+      glPushMatrix();
+      glTranslatef(gameObjects[i].position.endX,0,gameObjects[i].position.endZ);
+      glCallList(DLid);
+      glPopMatrix();
+   }
+   glPopMatrix();
+   
+   glPushMatrix();
     /////////////////////////////////////////////////////////////FPS CODE///////////////////////////////////////////
     frame++;
 	FPStime=glutGet(GLUT_ELAPSED_TIME);
@@ -393,29 +425,17 @@ GLvoid DrawScene(void)
 		frame = 0;
 		//renderBitmapCharacher(-.2,.7,0,FPSDisplay);
 	}
-	renderBitmapString(-.2,.7,0,FPSDisplay);
+	
 	//////////////////////////////////////////////////////////////End FPS Code///////////////////////////////////////
-    glPopMatrix();
-    glPushMatrix();
-    //glBegin(GL_LINE_LOOP);
-    drawWireFramePlane();
-    glBegin(GL_POLYGON);
-    glColor3f(0,0,1.0);
-    glVertex3f(-5.,0,5);
-    glVertex3f(5,0,5);
-    glVertex3f(5,0,-5);
-    glVertex3f(-5,0,-5);
-    glEnd();
-   
-    //glScalef(1.0/(float)max_extent, 1.0/(float)max_extent, 1.0/(float)max_extent);
-    //translate the object to the orgin
-    //glTranslatef(-(center.x), -(center.y), -(center.z));
-     glCallList(DLid);
-      glPopMatrix();
-		// Update the title with the correct FPS
-		char fps[50];
-		//sprintf(fps, "Third Degree - %.2f FPS", GetFPS());
-	//	SDL_WM_SetCaption(fps, 0);
+   glPopMatrix();
+   /*glColor3f(0.0f,1.0f,1.0f);
+	setOrthographicProjection();
+	glPushMatrix();
+	glLoadIdentity();*/
+	renderBitmapString(-.2,.7,0,FPSDisplay);
+	/*glPopMatrix();
+	resetPerspectiveProjection();*/
+		
 	SDL_GL_SwapBuffers();
 }
 
@@ -458,24 +478,35 @@ GLboolean CheckKeys(void)
 	// Others are SDLK_LEFT, SDLK_UP, etc
 }
 
-Uint32 FPSTimer(Uint32 interval, void *param)
-//int FPSTimer(int interval, int param)
+void GenerateRandNumbers(float arr[])
 {
-   /*frame++;
-	FPStime=glutGet(GLUT_ELAPSED_TIME);
-	
-	char s[11];
-	if (FPStime - timebase > 1000) {
-		sprintf(s,"FPS:%4.2f",
-			frame*1000.0/(FPStime-timebase));
-		timebase = FPStime;		
-		frame = 0;
-		cout << s << endl;
-		renderBitmapCharacher(-.2,.7,0,s);
-	}
-	cout << "Complete" << endl;
-	return 500;*/
+//Generate numbers between -4 and 4
+   for(int i = 0; i < 4;i++)
+   {
+      if(i <2)
+      {
+         arr[i] = ((float)(rand() / (float)RAND_MAX ) * 4)- ((float)(rand() / (float)RAND_MAX ) * 4);
+      }
+      else
+      {
+         arr[i] = ((float)(rand() / (float)RAND_MAX ) * 1)- ((float)(rand() / (float)RAND_MAX ) * 1);
+      }
+      
+   }
+   
+}
 
+Uint32 FPSTimer(Uint32 interval, void *param)
+{
+   float arr[4],temp1,temp2,temp3,temp4; 
+   GenerateRandNumbers(arr);
+   temp1 = arr[0];
+   temp2 = arr[1];
+   temp3 = arr[2];
+   temp4 = arr[3];	
+	gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,temp1,0.0f,temp2), *new MyVector(0.0f,0.0f,0.0f,temp3,0.0f,temp4), 0));
+	cout << "Entered Timer" << endl;
+	return 4000;
 }
 
 int main(int argc, char *argv[]) {
@@ -509,11 +540,11 @@ int main(int argc, char *argv[]) {
 	glClearColor( 1.0, 1.0 ,1.0, 1);
 	void *param;
 	//TIMER CODE
-	srand(50);
+	srand(500);
 	SDL_Init(SDL_INIT_TIMER);
    SDL_AddTimer(Uint32 (1000), FPSTimer, param);
    //ENDTIMER CODE
-	setCameraMode(_windowWidth, _windowHeight);
+	//setCameraMode(_windowWidth, _windowHeight);
    //////////////////////////////Mesh Initialize Code//////
    //make sure a file to read is specified
      if (argc > 1) {
@@ -560,12 +591,6 @@ int main(int argc, char *argv[]) {
 				running = 0;
          if(event.type == SDL_MOUSEMOTION)
          {
-         //printf("mouse clicked at %d %d\n", x, GH-y-1);
-             cout << "Mouse moving " << endl;
-             printf("Moused moved to %lf, %lf\n", p2wx(event.motion.x), p2wy(_windowHeight - event.motion.y - 1));
-                printf("Mouse moved by %d,%d to (%d,%d)\n", 
-                       event.motion.xrel, event.motion.yrel,
-                       event.motion.x, event.motion.y);
              if(mouseButtonDown)
              {
                //keep track of movement for camera motion, set mouse movement variable here.
