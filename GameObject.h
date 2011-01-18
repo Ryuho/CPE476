@@ -33,6 +33,9 @@ public:
    float boundsX;
    float boundsZ;
    
+   float R, G, B;
+   bool alive;
+   
    int id;
 };
 

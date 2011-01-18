@@ -26,6 +26,10 @@ GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _
    boundingBox.upperRightZ = .07;//_boundingBox.upperRightZ;   
    boundsX = 4;
    boundsZ = 4;
+   R = 0.0;
+   G = 0.0;
+   B = 0.5;
+   alive = true;
 }
 
 GameObject::~GameObject(void)
@@ -72,7 +76,9 @@ int GameObject::collidingWithObjects(vector<GameObject> gameObjects)
 
    for(int i = 0;i < gameObjects.size();i++)
    {
-      if(Collision(gameObjects[i].position, gameObjects[i].boundingBox) != 0 && gameObjects[i].id != id)
+      if(gameObjects[i].id != id && 
+          gameObjects[i].alive == true &&
+          Collision(gameObjects[i].position, gameObjects[i].boundingBox) != 0)
       {
          return i;
       }
@@ -89,6 +95,9 @@ update the position. However, it must check two constraints:
 position.
 2. If the new position would cause the object's bounding box to intersect the bounding of any
 other object, do not update the position.*/
+   if(!alive){
+     return;
+   }
    float timeInSec = 0;
    MyVector stepAmount(0,0,0,0,0,0);
    float theta = 0;

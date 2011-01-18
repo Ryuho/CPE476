@@ -16,8 +16,13 @@ using namespace std;
 #define FLT_MIN 1.1754E-38F
 #define FLT_MAX 1.1754E+38F
 
-const int _windowWidth = 600;
-const int _windowHeight = 600;
+//constants
+const int _windowWidth = 1080;
+const int _windowHeight = 780;
+
+const unsigned winPoints = 10;
+const float gameOverTime = 10.0;
+
 Uint8* _keys;
 
 //Mesh Vars
@@ -26,8 +31,8 @@ float max_x, max_y, max_z, min_x, min_y, min_z;
 float max_extent;
 
 //Mouse Movement Vars
-int mouseX;
-int mouseY;
+int mouseX = 0;
+int mouseY = 0;
 
 //CameraVars
 float ang_x = 0.0;
@@ -53,9 +58,13 @@ char FPSDisplay [11];
 unsigned points = 0;
 char PointsDisplay [11];
 
+
 //seconds elapsed
 unsigned seconds = 0;
 char SecondsDisplay [11];
+
+//game over 
+char GameOverDisplay [11];
 
 //used for delta time
 unsigned now = 0;
@@ -372,7 +381,6 @@ void drawStats()
   if (FPStime - timebase > 1000) {
     sprintf(FPSDisplay,"FPS:%4.2f",frame*1000.0/(FPStime-timebase));
     sprintf(PointsDisplay,"H:%d",points);
-    sprintf(SecondsDisplay,"%.2f sec",((float)seconds)/1000.0);
     timebase = FPStime;		
     frame = 0;
   }
@@ -380,11 +388,30 @@ void drawStats()
   glColor3f(1.0, 0.0, 0.0);
   glLoadIdentity();
   setOrthographicProjection();
-  renderBitmapString(1,15,0,FPSDisplay);
-  renderBitmapString(1,35,0,PointsDisplay);
-  renderBitmapString(1,55,0,SecondsDisplay);
-  resetPerspectiveProjection();
+  if(winPoints <= points){
+    sprintf(GameOverDisplay,"You Won!!");
+    //printf("Game Over!!\n");
+    renderBitmapString(_windowWidth/2-30,_windowHeight/2,0,GameOverDisplay);
+    if(gameOverTime+5.0 <= ((float)seconds)/1000.0){
+      exit(0);
+    }
+  }
+  else if(gameOverTime <= ((float)seconds)/1000.0){
+    sprintf(GameOverDisplay,"Game Over!!");
+    //printf("Game Over!!\n");
+    renderBitmapString(_windowWidth/2-50,_windowHeight/2,0,GameOverDisplay);
+    if(gameOverTime+5.0 <= ((float)seconds)/1000.0){
+      exit(0);
+    }
+  }
+  else{
+    renderBitmapString(1,15,0,FPSDisplay);
+    renderBitmapString(1,35,0,PointsDisplay);
+    renderBitmapString(1,55,0,SecondsDisplay);
+  }
   
+    
+  resetPerspectiveProjection();
   glPopMatrix();
 }
 
@@ -394,8 +421,8 @@ void drawGameObjects()
    for(int i = 0;i < gameObjects.size();i++)
    {//cout << gameObjects.size() << endl;
       glPushMatrix();
-      glColor3f(0.0, 0.0, 0.5);
-      glTranslatef(gameObjects[i].position.endX,-.03,gameObjects[i].position.endZ);
+      glColor3f(gameObjects[i].R, gameObjects[i].G, gameObjects[i].B);
+      glTranslatef(gameObjects[i].position.endX,gameObjects[i].position.endY,gameObjects[i].position.endZ);
       glCallList(DLid);
       glPopMatrix();
    }
@@ -501,7 +528,11 @@ GLboolean CheckKeys(int dt)
   while(objIndex != -1)
   {
     cout << "Player collided with #" << objIndex << "!" << endl;
-    gameObjects.erase (gameObjects.begin()+objIndex);
+    //gameObjects.erase (gameObjects.begin()+objIndex);
+    gameObjects[objIndex].alive = false;
+    gameObjects[objIndex].R = 0.5;
+    gameObjects[objIndex].B = 0.0;
+    
     points++;
     objIndex = player.collidingWithObjects(gameObjects);
   }
@@ -527,8 +558,8 @@ Uint32 spawnGameObj(Uint32 interval, void *param)
 {
   if(gameObjects.size() < 50)
   {
-     gameObjects.push_back(GameObject(eCount,MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), 
-       MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), randWrap(0.001,0.007)));
+     gameObjects.push_back(GameObject(eCount,MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),-.03f,randWrap(-4.0,4.0)), 
+       MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0,randWrap(-4.0,4.0)), randWrap(0.001,0.007)));
      eCount++;
   }
   return interval;
@@ -576,8 +607,6 @@ int main(int argc, char *argv[])
 {
   //Initialization
   glutInit(&argc, argv);
-  mouseX = 0;
-  mouseY = 0;
   max_x = max_y = max_z = FLT_MIN;
   min_x = min_y = min_z = FLT_MAX;
   cx =cy = cz = 0;
