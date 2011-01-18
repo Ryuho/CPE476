@@ -54,6 +54,7 @@ GLuint createDL(void);
 unsigned frame = 0;
 unsigned FPStime,timebase=0;
 char FPSDisplay [11];
+char ObjectDisplay[15];
 
 //Points value
 unsigned points = 0;
@@ -399,6 +400,7 @@ void drawStats()
     frame = 0;
   }
   sprintf(SecondsDisplay,"%.2f sec",((float)seconds)/1000.0);
+  sprintf(ObjectDisplay,"# of objs: %d",gameObjects.size());
   glColor3f(1.0, 0.0, 0.0);
   glLoadIdentity();
   setOrthographicProjection();
@@ -422,6 +424,7 @@ void drawStats()
     renderBitmapString(1,15,0,FPSDisplay);
     renderBitmapString(1,35,0,PointsDisplay);
     renderBitmapString(1,55,0,SecondsDisplay);
+    renderBitmapString(1,75,0,ObjectDisplay);
   }
   
     
