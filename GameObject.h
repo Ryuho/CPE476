@@ -7,6 +7,7 @@ using namespace std;
 class GameObject
 {
 public:
+
    typedef struct BoundingBox{
          float lowerLeftX;
          float lowerLeftY;
@@ -29,6 +30,7 @@ public:
    MyVector direction;   
    float velocity; 
    BoundingBox boundingBox;
+   
    
    float boundsX;
    float boundsZ;

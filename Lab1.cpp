@@ -20,8 +20,8 @@ using namespace std;
 const int _windowWidth = 1080;
 const int _windowHeight = 780;
 
-const unsigned winPoints = 10;
-const float gameOverTime = 10.0;
+const unsigned winPoints = 20;
+const float gameOverTime = 30.0;
 
 Uint8* _keys;
 
@@ -100,11 +100,25 @@ typedef struct materialStruct {
 } materialStruct;
 
 materialStruct RedFlat = {
-  {0.3, 0.0, 0.0, 1.0},
-  {0.9, 0.0, 0.0, 1.0},
-  {0.0, 0.0, 0.0, 1.0},
-  {0.0}
-};
+     {0.3, 0.0, 0.0, 1.0},
+     {0.9, 0.0, 0.0, 1.0},
+     {0.0, 0.0, 0.0, 1.0},
+     {0.0}
+   };
+   
+materialStruct GreenFlat = {
+     {0.0, 0.3, 0.0, 1.0},
+     {0.0, 0.9, 0.0, 1.0},
+     {0.0, 0.0, 0.0, 1.0},
+     {0.0}
+   };
+   
+materialStruct BlueFlat = {
+     {0.0, 0.0, 0.3, 1.0},
+     {0.0, 0.0, 0.9, 1.0},
+     {0.0, 0.0, 0.0, 1.0},
+     {0.0}
+   };
 
 //TODO define objects to store 1) vertices 2) faces - be sure you understand the file format
 typedef struct  vertice{
@@ -135,7 +149,7 @@ void readLine(char* str);
 void readStream(istream& is);
 
 
-void materials(materialStruct materials) {
+void setMaterial(materialStruct materials) {
   glMaterialfv(GL_FRONT, GL_AMBIENT, materials.ambient);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, materials.diffuse);
   glMaterialfv(GL_FRONT, GL_SPECULAR, materials.specular);
@@ -328,8 +342,7 @@ void drawWireFramePlane()
 {
   glPushMatrix(); {
     // Draw Grid
-    glDisable(GL_LIGHTING);
-    glColor3f(0, 1, 0);
+    setMaterial(BlueFlat);
     glBegin(GL_LINES); {
       for (float i = -4.0; i <= 4.0f; i += 1) {
         glVertex3f(i, 0, -4.0f);
@@ -421,7 +434,13 @@ void drawGameObjects()
    for(int i = 0;i < gameObjects.size();i++)
    {//cout << gameObjects.size() << endl;
       glPushMatrix();
-      glColor3f(gameObjects[i].R, gameObjects[i].G, gameObjects[i].B);
+      //glColor3f(gameObjects[i].R, gameObjects[i].G, gameObjects[i].B);
+      if(gameObjects[i].alive){
+         setMaterial(GreenFlat);
+      }
+      else{
+         setMaterial(RedFlat);
+      }
       glTranslatef(gameObjects[i].position.endX,gameObjects[i].position.endY,gameObjects[i].position.endZ);
       glCallList(DLid);
       glPopMatrix();
@@ -440,7 +459,6 @@ GLvoid DrawScene(void)
   glTranslatef(-pos_x, -pos_y, -pos_z);
     
   drawWireFramePlane();
-  materials(RedFlat);
   drawGameObjects();
   drawStats();
 		
@@ -598,7 +616,6 @@ void glInit()
    glLightfv(GL_LIGHT0, GL_SPECULAR, light_spec);
    //specify our lighting model as 1 normal per face
    glShadeModel(GL_FLAT);
-   materials(RedFlat);
    glEnable(GL_LIGHTING);
    pos_light();
 }
