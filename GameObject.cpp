@@ -6,7 +6,7 @@ GameObject::GameObject(void)
 {
 }
 
-GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _velocity)//, BoundingBox _boundingBox)
+GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _velocity,float llx, float lly, float llz, float urx, float ury, float urz)
 {
    id = _id;
    position.endX = _position.endX;
@@ -18,12 +18,20 @@ GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _
    direction.endZ = _direction.endZ;
    
    velocity = _velocity;
-   boundingBox.lowerLeftX = -.07;//_boundingBox.lowerLeftX;
-   boundingBox.lowerLeftY = 0;//_boundingBox.lowerLeftY;
-   boundingBox.lowerLeftZ = -.07;//_boundingBox.lowerLeftZ;
-   boundingBox.upperRightX = .07;//_boundingBox.upperRightX;
-   boundingBox.upperRightY = .17;//_boundingBox.upperRightY;
-   boundingBox.upperRightZ = .07;//_boundingBox.upperRightZ;   
+   boundingBox.lowerLeftX = -.07;
+   boundingBox.lowerLeftY = 0;
+   boundingBox.lowerLeftZ = -.07;
+   boundingBox.upperRightX = .07;
+   boundingBox.upperRightY = .17;
+   boundingBox.upperRightZ = .07;
+   
+   boundingBox.lowerLeftX = llx;
+   boundingBox.lowerLeftY = lly;
+   boundingBox.lowerLeftZ = llz;
+   boundingBox.upperRightX = urx;
+   boundingBox.upperRightY = ury;
+   boundingBox.upperRightZ = urz;
+   
    boundsX = 4;
    boundsZ = 4;
    R = 0.0;

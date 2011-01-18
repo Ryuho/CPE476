@@ -22,6 +22,7 @@ const int _windowHeight = 780;
 
 const unsigned winPoints = 20;
 const float gameOverTime = 30.0;
+const int totalEnemyCount = 10;
 
 Uint8* _keys;
 
@@ -574,10 +575,10 @@ float randWrap(float min, float max)
 
 Uint32 spawnGameObj(Uint32 interval, void *param)
 {
-  if(gameObjects.size() < 50)
+  if(gameObjects.size() < totalEnemyCount)
   {
      gameObjects.push_back(GameObject(eCount,MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),-.03f,randWrap(-4.0,4.0)), 
-       MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0,randWrap(-4.0,4.0)), randWrap(0.001,0.007)));
+       MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0,randWrap(-4.0,4.0)), randWrap(0.001,0.004),-.07f,0.f,-.07f,.07f,.17f,.07f));
      eCount++;
   }
   return interval;
@@ -628,8 +629,8 @@ int main(int argc, char *argv[])
   min_x = min_y = min_z = FLT_MAX;
   cx =cy = cz = 0;
   max_extent = 1.0;
-  player = GameObject(-1, MyVector(0.f,0.f,0.f,0.f,0.f,0.f), MyVector(0.f,0.f,0.f,0.f,0.f,0.f),0);
-  player.setBoundingBox(-0.1, -0.1, 0, 0.1, 0.1, 0.1);
+  player = GameObject(-1, MyVector(0.f,0.f,0.f,0.f,0.f,0.f), MyVector(0.f,0.f,0.f,0.f,0.f,0.f),0,-0.1f,-0.1f,0.f,0.1f,0.1f,0.1f);
+  //player.setBoundingBox(-0.1, -0.1, 0, 0.1, 0.1, 0.1);
   
   //SDL INITIALIZATIONS
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
