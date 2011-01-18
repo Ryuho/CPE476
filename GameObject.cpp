@@ -6,8 +6,9 @@ GameObject::GameObject(void)
 {
 }
 
-GameObject::GameObject(MyVector _position, MyVector _direction, float _velocity)//, BoundingBox _boundingBox)
+GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _velocity)//, BoundingBox _boundingBox)
 {
+   id = _id;
    position.endX = _position.endX;
    position.endY = _position.endY;
    position.endZ = _position.endZ;
@@ -17,12 +18,12 @@ GameObject::GameObject(MyVector _position, MyVector _direction, float _velocity)
    direction.endZ = _direction.endZ;
    
    velocity = _velocity;
-   boundingBox.lowerLeftX = -.1;//_boundingBox.lowerLeftX;
+   boundingBox.lowerLeftX = -.07;//_boundingBox.lowerLeftX;
    boundingBox.lowerLeftY = 0;//_boundingBox.lowerLeftY;
-   boundingBox.lowerLeftZ = -.1;//_boundingBox.lowerLeftZ;
-   boundingBox.upperRightX = .1;//_boundingBox.upperRightX;
-   boundingBox.upperRightY = .2;//_boundingBox.upperRightY;
-   boundingBox.upperRightZ = .1;//_boundingBox.upperRightZ;   
+   boundingBox.lowerLeftZ = -.07;//_boundingBox.lowerLeftZ;
+   boundingBox.upperRightX = .07;//_boundingBox.upperRightX;
+   boundingBox.upperRightY = .17;//_boundingBox.upperRightY;
+   boundingBox.upperRightZ = .07;//_boundingBox.upperRightZ;   
    boundsX = 4;
    boundsZ = 4;
 }
@@ -71,7 +72,7 @@ int GameObject::collidingWithObjects(vector<GameObject> gameObjects)
 
    for(int i = 0;i < gameObjects.size();i++)
    {
-      if(Collision(gameObjects[i].position, gameObjects[i].boundingBox) != 0)
+      if(Collision(gameObjects[i].position, gameObjects[i].boundingBox) != 0 && gameObjects[i].id != id)
       {
          return i;
       }
@@ -79,7 +80,7 @@ int GameObject::collidingWithObjects(vector<GameObject> gameObjects)
    return -1;
 }
 
-void GameObject::step(float dt)
+void GameObject::step(float dt, std::vector<GameObject>* gameObjects)
 {
    /*The step function receives one parameter, dt, the elapsed time. It must update the position by
 converting dt into elapsed time in seconds, then using that time value, the velocity and direction,
@@ -89,7 +90,7 @@ position.
 2. If the new position would cause the object's bounding box to intersect the bounding of any
 other object, do not update the position.*/
    float timeInSec = 0;
-   MyVector stepAmount = *new MyVector(0,0,0,0,0,0);
+   MyVector stepAmount(0,0,0,0,0,0);
    float theta = 0;
    
    timeInSec = dt;
@@ -112,9 +113,19 @@ other object, do not update the position.*/
       stepAmount.endX = cos(theta) * (timeInSec * velocity);
       stepAmount.endZ = sin(theta) * (timeInSec * velocity);
    }
-   
+
    position.endX += stepAmount.endX;
    position.endZ += stepAmount.endZ;
+   
+   int collIndex = collidingWithObjects(*gameObjects);
+   if(collIndex != -1)
+   {
+     //cout << "collision! " << gameObjects->size() << "             \r";
+     position.endX -= stepAmount.endX;
+     position.endZ -= stepAmount.endZ;
+     return;
+   }
+   
 }
 
 

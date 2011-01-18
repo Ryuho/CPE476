@@ -71,6 +71,9 @@ unsigned dtObj = 0;
 float MOVE_DELTA = -0.002f;
 float MOUSE_DELTA = 0.001f;
 
+//enemy count
+int eCount = 0;
+
 //GL light vars
 GLfloat light_pos[4] = {0, 0, 1.5, 1.0};
 GLfloat light_amb[4] = {0.6, 0.6, 0.6, 1.0};
@@ -524,8 +527,9 @@ Uint32 spawnGameObj(Uint32 interval, void *param)
 {
   if(gameObjects.size() < 50)
   {
-     gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), 
-       *new MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), randWrap(0.001,0.007)));
+     gameObjects.push_back(GameObject(eCount,MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), 
+       MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), randWrap(0.001,0.007)));
+     eCount++;
   }
   return interval;
 }
@@ -536,7 +540,7 @@ Uint32 gameObjStep(Uint32 interval, void *param)
   dtObj = nowObj - thenObj;
   for(int i = 0; i <  gameObjects.size();i++)
   {
-     gameObjects[i].step(dtObj);
+     gameObjects[i].step(dtObj,&gameObjects);
   }
   thenObj = glutGet(GLUT_ELAPSED_TIME);  
   return interval;
@@ -578,7 +582,7 @@ int main(int argc, char *argv[])
   min_x = min_y = min_z = FLT_MAX;
   cx =cy = cz = 0;
   max_extent = 1.0;
-  player = * new GameObject(*new MyVector(0.f,0.f,0.f,0.f,0.f,0.f),*new MyVector(0.f,0.f,0.f,0.f,0.f,0.f),0);
+  player = GameObject(-1, MyVector(0.f,0.f,0.f,0.f,0.f,0.f), MyVector(0.f,0.f,0.f,0.f,0.f,0.f),0);
   player.setBoundingBox(-0.1, -0.1, 0, 0.1, 0.1, 0.1);
   
   //SDL INITIALIZATIONS

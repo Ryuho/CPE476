@@ -17,12 +17,12 @@ public:
       } BoundingBox;
 
    GameObject(void);
-   GameObject(MyVector _position, MyVector _direction, float velocity);//, BoundingBox _boundingBox);
+   GameObject(int _id, MyVector _position, MyVector _direction, float velocity);//, BoundingBox _boundingBox);
    int Collision(MyVector pos, BoundingBox colliding);
    void setbounds(float boundX, float boundZ);
    void setBoundingBox(float llX, float llY, float llZ, float urX, float urY, float urZ);
    ~GameObject(void);
-   void step(float dt);
+   void step(float dt, std::vector<GameObject>* gameObjects);
    int collidingWithObjects(vector<GameObject> gameObjects);
    
    MyVector position;
@@ -32,6 +32,8 @@ public:
    
    float boundsX;
    float boundsZ;
+   
+   int id;
 };
 
 #endif
