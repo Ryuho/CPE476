@@ -20,7 +20,7 @@ using namespace std;
 const int _windowWidth = 1080;
 const int _windowHeight = 780;
 
-const unsigned winPoints = 20;
+const unsigned winPoints = 10;
 const float gameOverTime = 30.0;
 const int totalEnemyCount = 10;
 
