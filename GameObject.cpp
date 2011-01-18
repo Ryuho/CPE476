@@ -1,5 +1,6 @@
 #include "GameObject.h"
 #include <math.h>
+#include <iostream>
 
 GameObject::GameObject(void)
 {
@@ -22,6 +23,8 @@ GameObject::GameObject(MyVector _position, MyVector _direction, float _velocity)
    boundingBox.upperRightX = .1;//_boundingBox.upperRightX;
    boundingBox.upperRightY = .2;//_boundingBox.upperRightY;
    boundingBox.upperRightZ = .1;//_boundingBox.upperRightZ;   
+   boundsX = 4;
+   boundsZ = 4;
 }
 
 GameObject::~GameObject(void)
@@ -86,31 +89,32 @@ position.
 2. If the new position would cause the object's bounding box to intersect the bounding of any
 other object, do not update the position.*/
    float timeInSec = 0;
-   MyVector newPosition = *new MyVector(0,0,0,0,0,0);
+   MyVector stepAmount = *new MyVector(0,0,0,0,0,0);
    float theta = 0;
    
    timeInSec = dt;
    
-   theta = atan(direction.endZ/direction.endX);// need to convert to radians?
-   newPosition.endX = cos(theta) * (timeInSec * velocity);
-   newPosition.endZ = sin(theta) * (timeInSec * velocity);
+   theta = atan2(direction.endZ,direction.endX);
+   stepAmount.endX = cos(theta) * (timeInSec * velocity);
+   stepAmount.endZ = sin(theta) * (timeInSec * velocity);
    
-   if(newPosition.endX > boundsX || newPosition.endX < -boundsX)
+   if((position.endX + stepAmount.endX) > boundsX || (position.endX + stepAmount.endX) < -boundsX)
    {
-      //negate dir vector and recompute new position
       direction.endX = -direction.endX;
-      theta = atan(direction.endZ/direction.endX);// need to convert to radians?
-      newPosition.endX = cos(theta) * (timeInSec * velocity);      
+      theta = atan2(direction.endZ,direction.endX);
+      stepAmount.endX = cos(theta) * (timeInSec * velocity);
+      stepAmount.endZ = sin(theta) * (timeInSec * velocity);
    }
-   if(newPosition.endZ > boundsZ || newPosition.endZ < -boundsZ)
+   if((position.endZ + stepAmount.endZ) > boundsZ || (position.endZ + stepAmount.endZ) < -boundsZ)
    {
       direction.endZ = -direction.endZ;
-      theta = atan(direction.endZ/direction.endX);// need to convert to radians?
-      newPosition.endZ = sin(theta) * (timeInSec * velocity);
+      theta = atan2(direction.endZ,direction.endX);
+      stepAmount.endX = cos(theta) * (timeInSec * velocity);
+      stepAmount.endZ = sin(theta) * (timeInSec * velocity);
    }
-   position.endX = newPosition.endX;
-   position.endZ = newPosition.endZ;
    
+   position.endX += stepAmount.endX;
+   position.endZ += stepAmount.endZ;
 }
 
 

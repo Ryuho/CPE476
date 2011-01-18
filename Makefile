@@ -5,3 +5,5 @@ Lab1: Lab1.cpp
 	
 clean:
 	rm Lab1
+run:
+	./Lab1 bunny500.m

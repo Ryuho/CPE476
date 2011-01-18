@@ -60,6 +60,12 @@ char SecondsDisplay [11];
 //used for delta time
 unsigned now = 0;
 unsigned then = 0;
+unsigned dt = 0;
+
+//used for delta time
+unsigned nowObj = 0;
+unsigned thenObj = 0;
+unsigned dtObj = 0;
 
 //constants
 float MOVE_DELTA = -0.002f;
@@ -509,45 +515,30 @@ GLboolean CheckKeys(int dt)
   return false;
 }
 
-void GenerateRandNumbers(float arr[])
+float randWrap(float min, float max)
 {
-//Generate numbers between -4 and 4
-   for(int i = 0; i < 4;i++)
-   {
-      if(i <2)
-      {
-         arr[i] = ((float)(rand() / (float)RAND_MAX ) * 4)- ((float)(rand() / (float)RAND_MAX ) * 4);
-      }
-      else
-      {
-         arr[i] = ((float)(rand() / (float)RAND_MAX ) * 1)- ((float)(rand() / (float)RAND_MAX ) * 1);
-      }
-      
-   }
-   
+  return min+((max-min)*rand()/(RAND_MAX));
 }
 
 Uint32 spawnGameObj(Uint32 interval, void *param)
 {
-  float arr[4],temp1,temp2,temp3,temp4;
-  GenerateRandNumbers(arr);
-  temp1 = arr[0];
-  temp2 = arr[1];
-  temp3 = arr[2];
-  temp4 = arr[3];
-  //if(gameObjects.size() < 10)
-  //{
-     gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,temp1,0.0f,temp2), *new MyVector(0.0f,0.0f,0.0f,temp3,0.0f,temp4), .1));
-  //}
+  if(gameObjects.size() < 50)
+  {
+     gameObjects.push_back(*new GameObject(*new MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), 
+       *new MyVector(0.0f,0.0f,0.0f,randWrap(-4.0,4.0),0.0f,randWrap(-4.0,4.0)), randWrap(0.001,0.007)));
+  }
   return interval;
 }
 
 Uint32 gameObjStep(Uint32 interval, void *param)
 {
+  nowObj = glutGet(GLUT_ELAPSED_TIME);
+  dtObj = nowObj - thenObj;
   for(int i = 0; i <  gameObjects.size();i++)
   {
-     gameObjects[i].step(seconds/1000.0);
+     gameObjects[i].step(dtObj);
   }
+  thenObj = glutGet(GLUT_ELAPSED_TIME);  
   return interval;
 }
 
@@ -602,10 +593,10 @@ int main(int argc, char *argv[])
 		cout << "Unable to create OpenGL scene: " << SDL_GetError() << endl;
 		exit(2);
 	}
-	//glClearColor( 1.0, 1.0 ,1.0, 1);
+	glClearColor( 1.0, 1.0 ,1.0, 1);
 	void *param;
 	//TIMER CODE
-	srand(500);
+	srand(time(NULL));
 	SDL_Init(SDL_INIT_TIMER);
   SDL_AddTimer(Uint32 (100), spawnGameObj, param);
   SDL_AddTimer(Uint32 (10), gameObjStep, param);
@@ -650,8 +641,11 @@ int main(int argc, char *argv[])
   then = glutGet(GLUT_ELAPSED_TIME);
   _keys = SDL_GetKeyState(NULL);
   
-  int now = glutGet(GLUT_ELAPSED_TIME);
-  int dt = now - then;
+  now = glutGet(GLUT_ELAPSED_TIME);
+  nowObj = glutGet(GLUT_ELAPSED_TIME);
+  
+  dt = now - then;
+  dtObj = nowObj - thenObj;
 
   int running = 1;
   DLid = createDL();
