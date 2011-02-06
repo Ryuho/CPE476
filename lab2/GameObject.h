@@ -2,6 +2,9 @@
 #define GAME_OBJECT_H
 #include "MyVector.h"
 #include <vector>
+#include <stdio.h>
+#include <math.h>
+
 using namespace std;
 
 class GameObject
@@ -18,6 +21,7 @@ public:
       } BoundingBox;
 
    GameObject(void);
+   
    GameObject(int _id, MyVector _position, MyVector _direction, float velocity,float llx, float lly, float llz, float urx, float ury, float urz);
    int Collision(MyVector pos, BoundingBox colliding);
    void setbounds(float boundX, float boundZ);

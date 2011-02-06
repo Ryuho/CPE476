@@ -1,6 +1,8 @@
 #include "GameObject.h"
 #include <math.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
 
 GameObject::GameObject(void)
 {
@@ -32,8 +34,8 @@ GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _
    boundingBox.upperRightY = ury;
    boundingBox.upperRightZ = urz;
    
-   boundsX = 4;
-   boundsZ = 4;
+   boundsX = 8;
+   boundsZ = 8;
    R = 0.0;
    G = 0.0;
    B = 0.5;
@@ -94,6 +96,7 @@ int GameObject::collidingWithObjects(vector<GameObject> gameObjects)
    return -1;
 }
 
+
 void GameObject::step(float dt, std::vector<GameObject>* gameObjects)
 {
    /*The step function receives one parameter, dt, the elapsed time. It must update the position by
@@ -140,6 +143,10 @@ other object, do not update the position.*/
      //cout << "collision! " << gameObjects->size() << "             \r";
      position.endX -= stepAmount.endX;
      position.endZ -= stepAmount.endZ;
+     
+
+     direction.endX = -direction.endX + ((0.5)*rand()/(RAND_MAX));
+     direction.endZ = -direction.endZ + ((0.5)*rand()/(RAND_MAX));
      return;
    }
    

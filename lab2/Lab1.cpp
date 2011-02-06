@@ -16,13 +16,16 @@ using namespace std;
 #define FLT_MIN 1.1754E-38F
 #define FLT_MAX 1.1754E+38F
 
+SDL_Surface* screen = NULL;
+SDL_Surface* subScreen = NULL;
+
 //constants
 const int _windowWidth = 1080;
 const int _windowHeight = 780;
 
-const unsigned winPoints = 10;
-const float gameOverTime = 30.0;
-const int totalEnemyCount = 10;
+const unsigned winPoints = 30;
+const float gameOverTime = 60.0;
+const int totalEnemyCount = 200;
 
 Uint8* _keys;
 
@@ -84,6 +87,14 @@ float MOUSE_DELTA = 0.001f;
 
 //enemy count
 int eCount = 0;
+
+// used for frucstrum
+float lt[3];
+float rt[3];
+
+//bool to cull or not
+bool cullToggle = false;
+bool drawingMiniMap = false;
 
 //GL light vars
 GLfloat light_pos[4] = {0, 0, 1.5, 1.0};
@@ -185,6 +196,17 @@ void faceNorms()
       faces[index].normY /= mag;
       faces[index].normZ /= mag;
    }
+}
+
+void set_default_lt_rt()
+{
+   lt[0] = pos_x - 5 * sin(ang_y - M_PI / 6.0f);
+   lt[1] = 9.0f;
+   lt[2] = pos_z - 5 * cos(ang_y - M_PI / 6.0f);
+
+   rt[0] = pos_x - 5 * sin(ang_y + M_PI / 6.0f);
+   rt[1] = 9.0f;
+   rt[2] = pos_z - 5 * cos(ang_y + M_PI / 6.0f);
 }
 
 //process the input stream from the file
@@ -342,11 +364,17 @@ void renderBitmapString(float x, float y, float z, char *string)
 
 void drawWireFramePlane()
 {
+  
   glPushMatrix(); {
     // Draw Grid
     setMaterial(BlueFlat);
     glBegin(GL_LINES); {
-      for (float i = -4.0; i <= 4.0f; i += 1) {
+      for (float i = -8.0; i <= 8.0f; i += 1) {
+        glVertex3f(i, 0, -8.0f);
+        glVertex3f(i, 0, 8.0f);
+        glVertex3f(-8.0f, 0, i);
+        glVertex3f(8.0f, 0, i);
+        
         glVertex3f(i, 0, -4.0f);
         glVertex3f(i, 0, 4.0f);
         glVertex3f(-4.0f, 0, i);
@@ -446,30 +474,89 @@ void drawGameObjects()
          setMaterial(RedFlat);
       }
       glTranslatef(gameObjects[i].position.endX,gameObjects[i].position.endY,gameObjects[i].position.endZ);
-      glCallList(DLid);
+      if (gameObjects[i].id > 9000)
+      {
+          glPushMatrix();
+          setMaterial(BlueFlat);
+          glTranslatef(0, 0.28f, 0);
+          glutSolidCube(0.5);
+          glPopMatrix();
+          
+      }
+      else 
+      {
+         if(!cullToggle){
+            glCallList(DLid);
+         }
+         else if (gameObjects[i].position.endX >= 0){
+            glCallList(DLid);
+         }
+      }
+      
       glPopMatrix();
    }
    glPopMatrix();
 }
 
-GLvoid DrawScene(void)
+void drawMiniMap()
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+   drawingMiniMap = true;
+   glPushMatrix();
+      /* Set the viewport to 3/4 of the way across the screen on the bottom.
+       * It should take up the bottom right corner of the screen.
+       */
+      glViewport (_windowWidth*0.75, _windowHeight*0.75, _windowWidth/4, _windowHeight/4);
+      //glMatrixMode (GL_PROJECTION);		/* Select The Projection Matrix */
+      glLoadIdentity ();							/* Reset The Projection Matrix */
+      /* Set Up Ortho Mode To Fit 1/4 The Screen (Size Of A Viewport) */
+         //gluOrtho2D(0, GW/2, GH/2, 0);
+      //useOrtho();
 
-  glRotatef(360.0f - (ang_x * (180.0f / M_PI)), 1, 0, 0);
-  glRotatef(360.0f - (ang_y * (180.0f / M_PI)), 0, 1, 0);
-  glTranslatef(-pos_x, -pos_y, -pos_z);
-    
-  drawWireFramePlane();
-  drawGameObjects();
-  drawStats();
-		
-	SDL_GL_SwapBuffers();
+   glPushMatrix(); {
+      glRotatef(90, 1, 0, 0);
+      glTranslatef(0, -5.0f, 0);
+      
+
+      // Draw a solid sphere that signifies you
+      //glColor3f(0, 1, 0);
+      glutSolidSphere(0.25f, 5, 5);
+      
+      
+      // Draw actual scene
+      glEnable(GL_LIGHTING);
+      glPushMatrix(); {
+      
+         glTranslatef(pos_x, 0, pos_z);
+         drawWireFramePlane();
+         drawGameObjects();
+      }
+      glPopMatrix();
+      glDisable(GL_LIGHTING);
+
+      // Draw neat blended viewing frustum
+      glEnable(GL_BLEND);
+      glEnable(GL_ALPHA_TEST);
+      glAlphaFunc(GL_ALWAYS, 0.01);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glPushMatrix(); {
+         glColor4f(1, 0, 0, 0.5f);
+
+         glBegin(GL_TRIANGLES);
+         glVertex3f(pos_x,pos_y,pos_z);
+         glVertex3f(lt[0], lt[1], lt[2]);
+         glVertex3f(rt[0], rt[1], rt[2]);
+         glEnd();
+      }
+      glPopMatrix();
+      glDisable(GL_BLEND);
+      glDisable(GL_ALPHA_TEST);
+
+   }
+   glPopMatrix();
+   glEnable(GL_LIGHTING);
+   SDL_GL_SwapBuffers();
+   drawingMiniMap = false;
 }
-
-
 
 void setCameraMode(int width, int height) // reshape the window when it's moved or resized
 {
@@ -482,6 +569,37 @@ void setCameraMode(int width, int height) // reshape the window when it's moved 
 	glViewport(0, 0, width, height);
 
 }
+
+GLvoid DrawScene(void)
+{
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+
+   glRotatef(360.0f - (ang_x * (180.0f / M_PI)), 1, 0, 0);
+   glRotatef(360.0f - (ang_y * (180.0f / M_PI)), 0, 1, 0);
+   glTranslatef(-pos_x, -pos_y, -pos_z);
+   // Loop to draw the main viewport and the minimap
+   for (int loop = 0; loop < 2; loop++)
+      {
+      // Draw the main screen
+      if(loop == 0)
+      {
+         drawWireFramePlane();
+         drawGameObjects();
+         drawStats();
+      }      if(loop == 1)
+      {
+         drawMiniMap();
+         setCameraMode(_windowWidth, _windowHeight);
+      }
+   }
+	SDL_GL_SwapBuffers();
+}
+
+
+
+
 
 GLboolean CheckKeys(int dt)
 {
@@ -547,7 +665,7 @@ GLboolean CheckKeys(int dt)
   
   //check for collison with game objects
   int objIndex = player.collidingWithObjects(gameObjects);
-  while(objIndex != -1)
+  while(objIndex != -1 && gameObjects[objIndex].id <= 9000)
   {
     cout << "Player collided with #" << objIndex << "!" << endl;
     //gameObjects.erase (gameObjects.begin()+objIndex);
@@ -567,7 +685,8 @@ GLboolean CheckKeys(int dt)
     ang_y = 0;
     ang_z = 0;
   }
-    
+  
+  set_default_lt_rt();
   return false;
 }
 
@@ -642,7 +761,9 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (SDL_SetVideoMode(_windowWidth, _windowHeight, 0, SDL_OPENGL) == NULL)
+   screen = SDL_SetVideoMode(_windowWidth, _windowHeight, 0, SDL_OPENGL );
+   //subScreen =  SDL_SetVideoMode(800, 600, 0, SDL_OPENGL); 
+	if (screen == NULL)
 	{
 		cout << "Unable to create OpenGL scene: " << SDL_GetError() << endl;
 		exit(2);
@@ -652,10 +773,28 @@ int main(int argc, char *argv[])
 	//TIMER CODE
 	srand(time(NULL));
 	SDL_Init(SDL_INIT_TIMER);
-  SDL_AddTimer(Uint32 (100), spawnGameObj, param);
-  SDL_AddTimer(Uint32 (10), gameObjStep, param);
-  
-  //ENDTIMER CODE
+   SDL_AddTimer(Uint32 (100), spawnGameObj, param);
+   SDL_AddTimer(Uint32 (10), gameObjStep, param);
+   
+   gameObjects.push_back(GameObject(9001,MyVector(0.0f,0.0f,0.0f,randWrap(-8.0,8.0),-.03f,randWrap(-8.0,8.0)), 
+      MyVector(0.0f,0.0f,0.0f,0.0f,0.0f,0.0f), 0,-.17f,0.f,-.25f,.25f,.25f,.25f));
+      
+   gameObjects.push_back(GameObject(9002,MyVector(0.0f,0.0f,0.0f,randWrap(-8.0,8.0),-.03f,randWrap(-8.0,8.0)), 
+      MyVector(0.0f,0.0f,0.0f,0.0f,0.0f,0.0f), 0,-.17f,0.f,-.25f,.25f,.25f,.25f));
+      
+   gameObjects.push_back(GameObject(9003,MyVector(0.0f,0.0f,0.0f,randWrap(-8.0,8.0),-.03f,randWrap(-8.0,8.0)), 
+      MyVector(0.0f,0.0f,0.0f,0.0f,0.0f,0.0f), 0,-.17f,0.f,-.25f,.25f,.25f,.25f));
+      
+   gameObjects.push_back(GameObject(9004,MyVector(0.0f,0.0f,0.0f,randWrap(-8.0,8.0),-.03f,randWrap(-8.0,8.0)), 
+      MyVector(0.0f,0.0f,0.0f,0.0f,0.0f,0.0f), 0,-.17f,0.f,-.25f,.25f,.25f,.25f));
+      
+   gameObjects.push_back(GameObject(9005,MyVector(0.0f,0.0f,0.0f,randWrap(-8.0,8.0),-.03f,randWrap(-8.0,8.0)), 
+      MyVector(0.0f,0.0f,0.0f,0.0f,0.0f,0.0f), 0,-.17f,0.f,-.25f,.25f,.25f,.25f));
+   
+   
+   //(int _id, MyVector _position, MyVector _direction, float _velocity,float llx, float lly, float llz, float urx, float ury, float urz)
+   
+   //ENDTIMER CODE
 	setCameraMode(_windowWidth, _windowHeight);
 	
   //////////////////////////////Mesh Initialize Code//////
@@ -694,7 +833,11 @@ int main(int argc, char *argv[])
   SDL_ShowCursor(SDL_DISABLE);
   then = glutGet(GLUT_ELAPSED_TIME);
   _keys = SDL_GetKeyState(NULL);
-  
+
+
+
+
+
   now = glutGet(GLUT_ELAPSED_TIME);
   nowObj = glutGet(GLUT_ELAPSED_TIME);
   
@@ -737,6 +880,7 @@ int main(int argc, char *argv[])
       {
         printf("Mouse button %d pressed at (%d,%d)\n",event.button.button, event.button.x, event.button.y);
         mouseButtonDown = 1;
+        cullToggle = !cullToggle;
       }
       if (event.type == SDL_MOUSEBUTTONUP)
       {
