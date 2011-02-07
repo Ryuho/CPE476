@@ -25,7 +25,7 @@ const int _windowHeight = 780;
 
 const unsigned winPoints = 30;
 const float gameOverTime = 60.0;
-const int totalEnemyCount = 200;
+const int totalEnemyCount = 6;
 
 Uint8* _keys;
 
@@ -516,55 +516,61 @@ ma30*mb00 + ma31*mb10 + ma32*mb20 + ma33*mb30 	ma30*mb01 + ma31*mb11 + ma32*mb21
    //float right, left, top, bottom, near, far;
 
    float zVal = sqrt(pow(1,2.0f) + pow(1,2.0f));
-   float pointX = pos_x + sin(ang_x);
-   float pointY = pos_y + cos(ang_y);
+   float pointX = pos_x + cos(ang_x);
+   float pointY = pos_y + sin(ang_y);
+   cout << pos_x << " " << pos_y << " " << pos_z << endl;
    rightPlane = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3]);
    
    leftPlane = (ProjectionTimesModelview[0][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[0][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[0][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[0][3]+ProjectionTimesModelview[3][3]);
    
-   top = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3]);
+   bottom = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3]);
    
-   bottom = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3]);
+   top = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3]);
    
    far = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[2][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[2][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[2][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[2][3]);
    
    near = (ProjectionTimesModelview[2][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[2][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[2][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[2][3]+ProjectionTimesModelview[3][3]);
-   
+   //cout << rightPlane << " " << leftPlane << " " << top << " " << bottom << " " << far << " " << near << endl;
 }
 
 int culled(int index)
 {
    float rightTestObject, leftTestObject, topTestObject, bottomTestObject, nearTestObject, farTestObject;
    rightTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0])/rightPlane * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1])/rightPlane * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2])/rightPlane * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3])/rightPlane;
-   if(rightTestObject < 0)
-   {
+   
+   if(rightTestObject > 0)
+   {cout << "right object failed" << rightTestObject << endl;
       return 0;
    }
    leftTestObject = (ProjectionTimesModelview[0][0]+ProjectionTimesModelview[3][0])/leftPlane * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[0][1]+ProjectionTimesModelview[3][1])/leftPlane * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[0][2]+ProjectionTimesModelview[3][2])/leftPlane * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[0][3]+ProjectionTimesModelview[3][3])/leftPlane;
+   
    if(leftTestObject < 0)
-   {
+   {cout << "left object failed " << leftTestObject << endl;
       return 0;
    }
    topTestObject = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0])/top * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1])/top * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2])/top * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3])/top;
-   if(topTestObject < 0)
+   
+   if(topTestObject > 0)
    {
+   cout << "top object failed " << topTestObject << endl;
       return 0;
    }
    bottomTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0])/bottom * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1])/bottom * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2])/bottom * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3])/bottom;
-   if(bottomTestObject < 0)
-   {
+   if(bottomTestObject > 0)
+   {cout << "bottom object failed " << bottomTestObject << endl;
       return 0;
    }
    nearTestObject = (ProjectionTimesModelview[2][0]+ProjectionTimesModelview[3][0])/near * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[2][1]+ProjectionTimesModelview[3][1])/near * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[2][2]+ProjectionTimesModelview[3][2])/near * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[2][3]+ProjectionTimesModelview[3][3])/near;
-   if(nearTestObject < 0)
-   {
+   if(nearTestObject > 0)
+   {cout << "near object failed " << nearTestObject << endl;
       return 0;
    }
    farTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[2][0])/far * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[2][1])/far * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[2][2])/far * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[2][3])/far;
    if(farTestObject < 0)
-   {
+   {cout << "far object failed " << farTestObject << endl;
       return 0;
    }
+   //cout << rightTestObject << " " << leftTestObject << " " << topTestObject << " " << bottomTestObject << " " << farTestObject << " " << nearTestObject << endl;
    return 1;
 }
 
@@ -683,13 +689,19 @@ void setCameraMode(int width, int height) // reshape the window when it's moved 
 
 GLvoid DrawScene(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
    glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
    initViewFrustum();
+   glLoadIdentity();
+   
    glRotatef(360.0f - (ang_x * (180.0f / M_PI)), 1, 0, 0);
    glRotatef(360.0f - (ang_y * (180.0f / M_PI)), 0, 1, 0);
    glTranslatef(-pos_x, -pos_y, -pos_z);
+   glPointSize(3.0);
+   glBegin(GL_POINTS);
+      glColor3f(1.0,0,0);
+      glVertex3f(pos_x, pos_y, pos_z);
+   glEnd();
    // Loop to draw the main viewport and the minimap
    for (int loop = 0; loop < 2; loop++)
       {
