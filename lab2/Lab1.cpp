@@ -498,19 +498,19 @@ ma20*mb00 + ma21*mb10 + ma22*mb20 + ma23*mb30 	ma20*mb01 + ma21*mb11 + ma22*mb21
 ma30*mb00 + ma31*mb10 + ma32*mb20 + ma33*mb30 	ma30*mb01 + ma31*mb11 + ma32*mb21 + ma33*mb31 	ma30*mb02 + ma31*mb12 + ma32*mb22 + ma33*mb32 	ma30*mb03 + ma31*mb13 + ma32*mb23 + ma33*mb33*/
    for(int i = 0; i < 4; i++)
    {
-      ProjectionTimesModelview[i][0] = ProjectionMatrix[i][0] * ModelViewMatrix[0][0] + ProjectionMatrix[i][1] * ModelViewMatrix[1][0] + ProjectionMatrix[i][2] * ModelViewMatrix[2][0] + ProjectionMatrix[i][3] * ModelViewMatrix[3][0];    
+      ProjectionTimesModelview[i][0] = ProjectionMatrix[0][i] * ModelViewMatrix[0][0] + ProjectionMatrix[1][i] * ModelViewMatrix[0][1] + ProjectionMatrix[2][i] * ModelViewMatrix[0][2] + ProjectionMatrix[3][i] * ModelViewMatrix[0][3];    
    }
    for(int i = 0; i < 4; i++)
    {
-      ProjectionTimesModelview[i][1] = ProjectionMatrix[i][0] * ModelViewMatrix[0][1] + ProjectionMatrix[i][1] * ModelViewMatrix[1][1] + ProjectionMatrix[i][2] * ModelViewMatrix[2][1] + ProjectionMatrix[i][3] * ModelViewMatrix[3][1]; 
+      ProjectionTimesModelview[i][1] = ProjectionMatrix[0][i] * ModelViewMatrix[1][0] + ProjectionMatrix[1][i] * ModelViewMatrix[1][1] + ProjectionMatrix[2][i] * ModelViewMatrix[1][2] + ProjectionMatrix[3][i] * ModelViewMatrix[1][3]; 
    }
    for(int i = 0; i < 4; i++)
    {
-      ProjectionTimesModelview[i][2] = ProjectionMatrix[i][0] * ModelViewMatrix[0][2] + ProjectionMatrix[i][1] * ModelViewMatrix[1][2] + ProjectionMatrix[i][2] * ModelViewMatrix[2][2] + ProjectionMatrix[i][3] * ModelViewMatrix[3][2]; 
+      ProjectionTimesModelview[i][2] = ProjectionMatrix[0][i] * ModelViewMatrix[2][0] + ProjectionMatrix[1][i] * ModelViewMatrix[2][1] + ProjectionMatrix[2][i] * ModelViewMatrix[2][2] + ProjectionMatrix[3][i] * ModelViewMatrix[2][3]; 
    }
    for(int i = 0; i < 4; i++)
    {
-      ProjectionTimesModelview[i][3] = ProjectionMatrix[i][0] * ModelViewMatrix[0][3] + ProjectionMatrix[i][1] * ModelViewMatrix[1][3] + ProjectionMatrix[i][2] * ModelViewMatrix[2][3] + ProjectionMatrix[i][3] * ModelViewMatrix[3][3]; 
+      ProjectionTimesModelview[i][3] = ProjectionMatrix[0][i] * ModelViewMatrix[3][0] + ProjectionMatrix[1][i] * ModelViewMatrix[3][1] + ProjectionMatrix[2][i] * ModelViewMatrix[3][2] + ProjectionMatrix[3][i] * ModelViewMatrix[3][3]; 
    }
    //Test Against Known Point then normalize!!
    //float right, left, top, bottom, near, far;
