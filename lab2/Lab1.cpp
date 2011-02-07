@@ -25,7 +25,7 @@ const int _windowHeight = 780;
 
 const unsigned winPoints = 30;
 const float gameOverTime = 600.0;
-const int totalEnemyCount = 6;
+const int totalEnemyCount = 1000;
 
 Uint8* _keys;
 
@@ -521,9 +521,9 @@ ma30*mb00 + ma31*mb10 + ma32*mb20 + ma33*mb30 	ma30*mb01 + ma31*mb11 + ma32*mb21
     
    //printf("x,y,z=%.2f\t%.2f\t%.2f| ang_x,ang_y=%.2f\t%.2f\n", pos_x, pos_y, pos_z, ang_x,ang_y);
    //printf("point=%.2f\t%.2f\t%.2f\n", pointX, pointY, pointZ);
-   glTranslatef(pointX, pointY, pointZ);
-   glutSolidTeapot(0.1);
-   glTranslatef(-pointX, -pointY, -pointZ);
+   //glTranslatef(pointX, pointY, pointZ);
+   //glutSolidTeapot(0.1);
+   //glTranslatef(-pointX, -pointY, -pointZ);
    
    rightPlane = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2]) * pointZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3]);
    
@@ -543,49 +543,55 @@ ma30*mb00 + ma31*mb10 + ma32*mb20 + ma33*mb30 	ma30*mb01 + ma31*mb11 + ma32*mb21
        bottom     < 0 || 
        far        < 0 ||
        near       < 0  ){
-       
        cout << "the reference point became outside of the view angle, this should never happen!!!" << endl;
+       exit(0);
    }
 }
 
 int culled(int index)
 {
    float rightTestObject, leftTestObject, topTestObject, bottomTestObject, nearTestObject, farTestObject;
-   rightTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0])/rightPlane * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1])/rightPlane * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2])/rightPlane * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3])/rightPlane;
+   rightTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0]) * gameObjects[index].position.endX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1]) * gameObjects[index].position.endY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2]) * gameObjects[index].position.endZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3]);
    
    if(rightTestObject < 0)
-   {cout << "right object failed" << rightTestObject << endl;
+   {//cout << "right object failed" << rightTestObject << endl;
       return 0;
    }
-   leftTestObject = (ProjectionTimesModelview[0][0]+ProjectionTimesModelview[3][0])/leftPlane * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[0][1]+ProjectionTimesModelview[3][1])/leftPlane * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[0][2]+ProjectionTimesModelview[3][2])/leftPlane * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[0][3]+ProjectionTimesModelview[3][3])/leftPlane;
+   
+   leftTestObject = (ProjectionTimesModelview[0][0]+ProjectionTimesModelview[3][0]) * gameObjects[index].position.endX + (ProjectionTimesModelview[0][1]+ProjectionTimesModelview[3][1]) * gameObjects[index].position.endY + (ProjectionTimesModelview[0][2]+ProjectionTimesModelview[3][2]) * gameObjects[index].position.endZ + (ProjectionTimesModelview[0][3]+ProjectionTimesModelview[3][3]);
    
    if(leftTestObject < 0)
-   {cout << "left object failed " << leftTestObject << endl;
+   {//cout << "left object failed " << leftTestObject << endl;
       return 0;
    }
-   topTestObject = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0])/top * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1])/top * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2])/top * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3])/top;
+   
+   topTestObject = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0])/top * gameObjects[index].position.endX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1])/top * gameObjects[index].position.endY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2])/top * gameObjects[index].position.endZ + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3])/top;
    
    if(topTestObject < 0)
    {
-   cout << "top object failed " << topTestObject << endl;
+   //cout << "top object failed " << topTestObject << endl;
       return 0;
    }
-   bottomTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0])/bottom * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1])/bottom * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2])/bottom * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3])/bottom;
+   
+   bottomTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0])/bottom * gameObjects[index].position.endX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1])/bottom * gameObjects[index].position.endY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2])/bottom * gameObjects[index].position.endZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3])/bottom;
    if(bottomTestObject < 0)
-   {cout << "bottom object failed " << bottomTestObject << endl;
+   {//cout << "bottom object failed " << bottomTestObject << endl;
       return 0;
    }
-   nearTestObject = (ProjectionTimesModelview[2][0]+ProjectionTimesModelview[3][0])/near * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[2][1]+ProjectionTimesModelview[3][1])/near * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[2][2]+ProjectionTimesModelview[3][2])/near * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[2][3]+ProjectionTimesModelview[3][3])/near;
+   
+   nearTestObject = (ProjectionTimesModelview[2][0]+ProjectionTimesModelview[3][0])/near * gameObjects[index].position.endX + (ProjectionTimesModelview[2][1]+ProjectionTimesModelview[3][1])/near * gameObjects[index].position.endY + (ProjectionTimesModelview[2][2]+ProjectionTimesModelview[3][2])/near * gameObjects[index].position.endZ + (ProjectionTimesModelview[2][3]+ProjectionTimesModelview[3][3])/near;
    if(nearTestObject < 0)
-   {cout << "near object failed " << nearTestObject << endl;
+   {//cout << "near object failed " << nearTestObject << endl;
       return 0;
    }
-   farTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[2][0])/far * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[2][1])/far * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[2][2])/far * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[2][3])/far;
+   
+   farTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[2][0])/far * gameObjects[index].position.endX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[2][1])/far * gameObjects[index].position.endY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[2][2])/far * gameObjects[index].position.endZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[2][3])/far;
    if(farTestObject < 0)
-   {cout << "far object failed " << farTestObject << endl;
+   {//cout << "far object failed " << farTestObject << endl;
       return 0;
    }
    //cout << rightTestObject << " " << leftTestObject << " " << topTestObject << " " << bottomTestObject << " " << farTestObject << " " << nearTestObject << endl;
+   //cout << "Passed all the test!" << endl;
    return 1;
 }
 
