@@ -643,13 +643,14 @@ void drawMiniMap()
       glEnable(GL_LIGHTING);
       glPushMatrix(); {
       
-         glTranslatef(pos_x, 0, pos_z);
+         glTranslatef(-pos_x, 0, -pos_z);
          drawWireFramePlane();
          drawGameObjects();
       }
       glPopMatrix();
       glDisable(GL_LIGHTING);
 
+      /* broken for now...
       // Draw neat blended viewing frustum
       glEnable(GL_BLEND);
       glEnable(GL_ALPHA_TEST);
@@ -667,7 +668,7 @@ void drawMiniMap()
       glPopMatrix();
       glDisable(GL_BLEND);
       glDisable(GL_ALPHA_TEST);
-
+      */
    }
    glPopMatrix();
    glEnable(GL_LIGHTING);
