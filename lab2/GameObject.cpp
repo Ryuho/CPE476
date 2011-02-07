@@ -20,12 +20,6 @@ GameObject::GameObject(int _id, MyVector _position, MyVector _direction, float _
    direction.endZ = _direction.endZ;
    
    velocity = _velocity;
-   boundingBox.lowerLeftX = -.07;
-   boundingBox.lowerLeftY = 0;
-   boundingBox.lowerLeftZ = -.07;
-   boundingBox.upperRightX = .07;
-   boundingBox.upperRightY = .17;
-   boundingBox.upperRightZ = .07;
    
    boundingBox.lowerLeftX = llx;
    boundingBox.lowerLeftY = lly;
