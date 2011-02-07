@@ -45,6 +45,7 @@ float ang_z = 0.0;
 float pos_x = 0.0;
 float pos_y = 0.0;
 float pos_z = 0.0;
+float rightPlane, leftPlane, top, bottom, near, far;
 
 //Game Vars
 vector<GameObject> gameObjects;
@@ -132,6 +133,29 @@ materialStruct BlueFlat = {
      {0.0, 0.0, 0.0, 1.0},
      {0.0}
    };
+
+/**an example of a simple data structure to store a 4x4 matrix */
+GLfloat ProjectionMatrix[4][4] = {
+  {1.0, 0.0, 0.0, 0.0},
+  {0.0, 1.0, 0.0, 0.0},
+  {0.0, 0.0, 1.0, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
+};
+
+GLfloat ModelViewMatrix[4][4] = {
+  {1.0, 0.0, 0.0, 0.0},
+  {0.0, 1.0, 0.0, 0.0},
+  {0.0, 0.0, 1.0, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
+};
+
+
+GLfloat ProjectionTimesModelview[4][4] = {
+  {1.0, 0.0, 0.0, 0.0},
+  {0.0, 1.0, 0.0, 0.0},
+  {0.0, 0.0, 1.0, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
+};
 
 //TODO define objects to store 1) vertices 2) faces - be sure you understand the file format
 typedef struct  vertice{
@@ -460,6 +484,90 @@ void drawStats()
   glPopMatrix();
 }
 
+void initViewFrustum()
+{
+   glGetFloatv(GL_PROJECTION_MATRIX, *ProjectionMatrix);
+   glGetFloatv(GL_MODELVIEW_MATRIX, *ModelViewMatrix);
+   //Do Projection * ModelView
+   /*ma00*mb00 + ma01*mb10 + ma02*mb20 + ma03*mb30  	ma00*mb01 + ma01*mb11 + ma02*mb21 + ma03*mb31  	ma00*mb02 + ma01*mb12 + ma02*mb22 + ma03*mb32  	ma00*mb03 + ma01*mb13 + ma02*mb23 + ma03*mb33
+   
+ma10*mb00 + ma11*mb10 + ma12*mb20 + ma13*mb30 	ma10*mb01 + ma11*mb11 + ma12*mb21 + ma13*mb31 	ma10*mb02 + ma11*mb12 + ma12*mb22 + ma13*mb32 	ma10*mb03 + ma11*mb13 + ma12*mb23 + ma13*mb33
+
+ma20*mb00 + ma21*mb10 + ma22*mb20 + ma23*mb30 	ma20*mb01 + ma21*mb11 + ma22*mb21 + ma23*mb31 	ma20*mb02 + ma21*mb12 + ma22*mb22 + ma23*mb32 	ma20*mb03 + ma21*mb13 + ma22*mb23 + ma23*mb33
+
+ma30*mb00 + ma31*mb10 + ma32*mb20 + ma33*mb30 	ma30*mb01 + ma31*mb11 + ma32*mb21 + ma33*mb31 	ma30*mb02 + ma31*mb12 + ma32*mb22 + ma33*mb32 	ma30*mb03 + ma31*mb13 + ma32*mb23 + ma33*mb33*/
+   for(int i = 0; i < 4; i++)
+   {
+      ProjectionTimesModelview[i][0] = ProjectionMatrix[i][0] * ModelViewMatrix[0][0] + ProjectionMatrix[i][1] * ModelViewMatrix[1][0] + ProjectionMatrix[i][2] * ModelViewMatrix[2][0] + ProjectionMatrix[i][3] * ModelViewMatrix[3][0];    
+   }
+   for(int i = 0; i < 4; i++)
+   {
+      ProjectionTimesModelview[i][1] = ProjectionMatrix[i][0] * ModelViewMatrix[0][1] + ProjectionMatrix[i][1] * ModelViewMatrix[1][1] + ProjectionMatrix[i][2] * ModelViewMatrix[2][1] + ProjectionMatrix[i][3] * ModelViewMatrix[3][1]; 
+   }
+   for(int i = 0; i < 4; i++)
+   {
+      ProjectionTimesModelview[i][2] = ProjectionMatrix[i][0] * ModelViewMatrix[0][2] + ProjectionMatrix[i][1] * ModelViewMatrix[1][2] + ProjectionMatrix[i][2] * ModelViewMatrix[2][2] + ProjectionMatrix[i][3] * ModelViewMatrix[3][2]; 
+   }
+   for(int i = 0; i < 4; i++)
+   {
+      ProjectionTimesModelview[i][3] = ProjectionMatrix[i][0] * ModelViewMatrix[0][3] + ProjectionMatrix[i][1] * ModelViewMatrix[1][3] + ProjectionMatrix[i][2] * ModelViewMatrix[2][3] + ProjectionMatrix[i][3] * ModelViewMatrix[3][3]; 
+   }
+   //Test Against Known Point then normalize!!
+   //float right, left, top, bottom, near, far;
+
+   float zVal = sqrt(pow(1,2.0f) + pow(1,2.0f));
+   float pointX = pos_x + sin(ang_x);
+   float pointY = pos_y + cos(ang_y);
+   rightPlane = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3]);
+   
+   leftPlane = (ProjectionTimesModelview[0][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[0][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[0][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[0][3]+ProjectionTimesModelview[3][3]);
+   
+   top = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3]);
+   
+   bottom = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3]);
+   
+   far = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[2][0]) * pointX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[2][1]) * pointY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[2][2]) * zVal + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[2][3]);
+   
+   near = (ProjectionTimesModelview[2][0]+ProjectionTimesModelview[3][0]) * pointX + (ProjectionTimesModelview[2][1]+ProjectionTimesModelview[3][1]) * pointY + (ProjectionTimesModelview[2][2]+ProjectionTimesModelview[3][2]) * zVal + (ProjectionTimesModelview[2][3]+ProjectionTimesModelview[3][3]);
+   
+}
+
+int culled(int index)
+{
+   float rightTestObject, leftTestObject, topTestObject, bottomTestObject, nearTestObject, farTestObject;
+   rightTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[0][0])/rightPlane * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[0][1])/rightPlane * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[0][2])/rightPlane * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[0][3])/rightPlane;
+   if(rightTestObject < 0)
+   {
+      return 0;
+   }
+   leftTestObject = (ProjectionTimesModelview[0][0]+ProjectionTimesModelview[3][0])/leftPlane * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[0][1]+ProjectionTimesModelview[3][1])/leftPlane * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[0][2]+ProjectionTimesModelview[3][2])/leftPlane * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[0][3]+ProjectionTimesModelview[3][3])/leftPlane;
+   if(leftTestObject < 0)
+   {
+      return 0;
+   }
+   topTestObject = (ProjectionTimesModelview[1][0]+ProjectionTimesModelview[3][0])/top * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[1][1]+ProjectionTimesModelview[3][1])/top * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[1][2]+ProjectionTimesModelview[3][2])/top * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[1][3]+ProjectionTimesModelview[3][3])/top;
+   if(topTestObject < 0)
+   {
+      return 0;
+   }
+   bottomTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[1][0])/bottom * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[1][1])/bottom * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[1][2])/bottom * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[1][3])/bottom;
+   if(bottomTestObject < 0)
+   {
+      return 0;
+   }
+   nearTestObject = (ProjectionTimesModelview[2][0]+ProjectionTimesModelview[3][0])/near * gameObjects[index].boundingBox.lowerLeftX + (ProjectionTimesModelview[2][1]+ProjectionTimesModelview[3][1])/near * gameObjects[index].boundingBox.lowerLeftY + (ProjectionTimesModelview[2][2]+ProjectionTimesModelview[3][2])/near * gameObjects[index].boundingBox.lowerLeftZ + (ProjectionTimesModelview[2][3]+ProjectionTimesModelview[3][3])/near;
+   if(nearTestObject < 0)
+   {
+      return 0;
+   }
+   farTestObject = (ProjectionTimesModelview[3][0]-ProjectionTimesModelview[2][0])/far * gameObjects[index].boundingBox.upperRightX + (ProjectionTimesModelview[3][1]-ProjectionTimesModelview[2][1])/far * gameObjects[index].boundingBox.upperRightY + (ProjectionTimesModelview[3][2]-ProjectionTimesModelview[2][2])/far * gameObjects[index].boundingBox.upperRightZ + (ProjectionTimesModelview[3][3]-ProjectionTimesModelview[2][3])/far;
+   if(farTestObject < 0)
+   {
+      return 0;
+   }
+   return 1;
+}
+
 void drawGameObjects()
 {
    glPushMatrix();
@@ -488,9 +596,12 @@ void drawGameObjects()
          if(!cullToggle){
             glCallList(DLid);
          }
-         else if (gameObjects[i].position.endX >= 0){
-            glCallList(DLid);
+         else if(culled(i)){
+             glCallList(DLid);
          }
+         /*else if (gameObjects[i].position.endX >= 0){
+            glCallList(DLid);
+         }*/
       }
       
       glPopMatrix();
@@ -575,7 +686,7 @@ GLvoid DrawScene(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-
+   initViewFrustum();
    glRotatef(360.0f - (ang_x * (180.0f / M_PI)), 1, 0, 0);
    glRotatef(360.0f - (ang_y * (180.0f / M_PI)), 0, 1, 0);
    glTranslatef(-pos_x, -pos_y, -pos_z);
@@ -588,7 +699,8 @@ GLvoid DrawScene(void)
          drawWireFramePlane();
          drawGameObjects();
          drawStats();
-      }      if(loop == 1)
+      }
+      if(loop == 1)
       {
          drawMiniMap();
          setCameraMode(_windowWidth, _windowHeight);
@@ -596,10 +708,6 @@ GLvoid DrawScene(void)
    }
 	SDL_GL_SwapBuffers();
 }
-
-
-
-
 
 GLboolean CheckKeys(int dt)
 {
